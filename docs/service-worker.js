@@ -1,5 +1,5 @@
 const CACHE_NAME = "query-browser-cache-v1";
-const urlsToCache = [
+const filesToCache = [
     "./",
     "index.html",
     "manifest.json",
