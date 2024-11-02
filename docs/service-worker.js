@@ -7,8 +7,8 @@ const filesToCache = [
     "styles/main.css",
     "scripts/app.js",
     "offline.html",
-    "images/icon-192x192.png",
-    "images/icon-512x512.png",
+    "images/web-app-manifest-192x192.png",
+    "images/web-app-manifest-512x512.png",
     "https://cdn.plot.ly/plotly-latest.min.js",
     "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
 ];
