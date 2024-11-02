@@ -3,6 +3,7 @@ const urlsToCache = [
     "./",
     "index.html",
     'manifest.json',
+    "service-worker.js",
     "styles/main.css",
     "scripts/app.js",
     'offline.html',
@@ -13,22 +14,14 @@ const urlsToCache = [
 ];
 
 // Install event - caches app shell files
-//caches.open(CACHE_NAME).then(cache => {
-//    console.log('Caching app shell');
- //   return cache.addAll(urlsToCache).catch(error => {
- //       console.error('Failed to cache:', error);
- //   });
-//});
+caches.open(CACHE_NAME).then(cache => {
+    console.log('Caching app shell');
+    return cache.addAll(urlsToCache).catch(error => {
+        console.error('Failed to cache:', error);
+    });
+});
 
-// Install event - caches app shell files
-self.addEventListener('install', event => {
-    event.waitUntil(
-      caches.open(cacheName).then(cache => {
-        console.log('Caching app shell');
-        return cache.addAll(filesToCache);
-      })
-    );
-  });
+
 
 // Activate event - clears old caches
 self.addEventListener('activate', event => {
@@ -50,9 +43,11 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request).then((response) => {
-            if (event.request.mode === 'navigate' && !response) {
+            // Handle navigation requests
+            if (event.request.mode === 'navigate') {
                 return response || caches.match('./index.html');
             }
+            // For all other requests, return the cached response or fetch from network
             return response || fetch(event.request).catch(() => caches.match('offline.html'));
         }).catch((error) => {
             console.error('Fetch failed; returning offline page instead.', error);
