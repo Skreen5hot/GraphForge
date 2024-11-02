@@ -1,6 +1,6 @@
 {
-    "name": "Neo4j-Like Query Browser",
-    "short_name": "QueryBrowser",
+    "name": "GraphForge",
+    "short_name": "GraphForge",
     "description": "A Neo4j-like browser for running and visualizing queries.",
     "start_url": "./index.html",
     "display": "standalone",
