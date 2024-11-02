@@ -8,17 +8,23 @@ const urlsToCache = [
     'offline.html',
     'images/icon-192x192.png',
     'images/icon-512x512.png',
+    "https://cdn.plot.ly/plotly-latest.min.js",
+    "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
 ];
 
+// Install event - caches app shell files
 // Install event - caches app shell files
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             console.log('Caching app shell');
-            return cache.addAll(urlsToCache);
-        })
-    );
+            return cache.addAll(urlsToCache).catch(error => {
+                console.error('Failed to cache:', error);
+            });
+        }) 
+    ); 
 });
+
 
 // Activate event - clears old caches
 self.addEventListener('activate', event => {
