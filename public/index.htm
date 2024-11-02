@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neo4j-Like Query Browser</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Neo4j-Like Browser</h1>
+    </header>
+
+    <div class="container">
+        <div class="main">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <h2>Navigation</h2>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Saved Queries</a></li>
+                    <li><a href="#">Settings</a></li>
+                </ul>
+            </aside>
+
+            <!-- Content area -->
+            <div class="content">
+                <button id="add-query-section" class="add-query-button">+ New Query</button>
+                <section id="query-sections-container" class="query-sections-container">
+                    <!-- New query sections will be added here dynamically -->
+                </section>
+            </div>
+
+            <!-- Right Panel -->
+            <aside class="right-panel">
+                <h2>Details Panel</h2>
+                <p>Selected nodes and relationships will appear here.</p>
+            </aside>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Neo4j-Like Browser</p>
+    </footer>
+
+    <script src="src/app.js"></script>
+
+        <!-- Service Worker Registration -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log("Service Worker registered with scope:", registration.scope);
+                        })
+                        .catch(error => {
+                            console.error("Service Worker registration failed:", error);
+                        });
+                });
+            }
+        </script>
+</body>
+</html>
