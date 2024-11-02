@@ -16,12 +16,15 @@ const filesToCache = [
 // Install event - caches app shell files
 self.addEventListener('install', event => {
     event.waitUntil(
-      caches.open(CACHE_NAME).then(cache => {
-        console.log('Caching app shell');
-        return cache.addAll(filesToCache);
-      })
+        caches.open(CACHE_NAME).then(cache => {
+            console.log('Caching app shell');
+            return cache.addAll(filesToCache).catch(error => {
+                console.error('Failed to cache:', error);
+            });
+        })
     );
-  });
+});
+
   
   // Activate event - clears old caches
   self.addEventListener('activate', event => {
