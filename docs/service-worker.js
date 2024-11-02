@@ -1,9 +1,9 @@
 const CACHE_NAME = "query-browser-cache-v1";
 const urlsToCache = [
-    "/",
-    "/index.html",
-    "/main.css",
-    "/src/app.js",
+    "./",
+    "index.html",
+    "styles/main.css",
+    "scripts/app.js",
     "https://cdn.plot.ly/plotly-latest.min.js",
     "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
 ];
@@ -48,8 +48,8 @@ self.addEventListener("fetch", (event) => {
             });
         }).catch(() => {
             // Optional fallback if needed for specific requests
-            if (event.request.mode === 'navigate') {
-                return caches.match("/index.html");
+            if (event.request.mode === 'navigate' && !response) {
+                return caches.match("./index.html");
             }
         })
     );
