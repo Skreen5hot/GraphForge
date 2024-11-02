@@ -38,18 +38,20 @@ self.addEventListener('install', event => {
     );
   });
   
-  // Fetch event - serves cached content when offline
-  self.addEventListener('fetch', event => {
-      event.respondWith(
-        caches.match(event.request).then(response => {
-          // If the request is for the root path, return `index.html`
-          if (event.request.mode === 'navigate' && !response) {
-            return caches.match('./index.html');
-          }
-          // Return the cached response if found, or fetch from network if not cached
-          return response || fetch(event.request).catch(() => caches.match('offline.html'));
+  self.addEventListener('fetch', (event) => {
+    event.respondWith(
+        caches.match(event.request).then((response) => {
+            // Serve `index.html` for navigation requests if no cache match is found
+            if (event.request.mode === 'navigate') {
+                return response || caches.match('/index.html');
+            }
+            // For other requests, serve cached response or fetch from network, with a fallback to offline.html
+            return response || fetch(event.request).catch(() => caches.match('/offline.html'));
+        }).catch((error) => {
+            console.error('Fetch failed; returning offline page instead.', error);
+            return caches.match('/offline.html');
         })
-      );
-    });
-    
+    );
+});
+
     
