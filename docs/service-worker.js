@@ -2,26 +2,34 @@ const CACHE_NAME = "query-browser-cache-v1";
 const urlsToCache = [
     "./",
     "index.html",
-    'manifest.json',
+    "manifest.json",
     "service-worker.js",
     "styles/main.css",
     "scripts/app.js",
-    'offline.html',
-    'images/icon-192x192.png',
-    'images/icon-512x512.png',
+    "offline.html",
+    "images/icon-192x192.png",
+    "images/icon-512x512.png"
+];
+
+// External URLs (may fail due to CORS policies)
+const externalUrls = [
     "https://cdn.plot.ly/plotly-latest.min.js",
     "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
 ];
 
 // Install event - caches app shell files
-caches.open(CACHE_NAME).then(cache => {
-    console.log('Caching app shell');
-    return cache.addAll(urlsToCache).catch(error => {
-        console.error('Failed to cache:', error);
-    });
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('Caching app shell');
+                return cache.addAll(urlsToCache);
+            })
+            .catch(error => {
+                console.error('Failed to cache app shell:', error);
+            })
+    );
 });
-
-
 
 // Activate event - clears old caches
 self.addEventListener('activate', event => {
@@ -53,5 +61,21 @@ self.addEventListener('fetch', (event) => {
             console.error('Fetch failed; returning offline page instead.', error);
             return caches.match('offline.html');
         })
+    );
+});
+
+// Optional: Try caching external URLs (may fail)
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                return Promise.all(
+                    externalUrls.map(url =>
+                        fetch(url, { mode: 'no-cors' })
+                            .then(response => cache.put(url, response))
+                            .catch(error => console.warn(`External asset not cached: ${url}`, error))
+                    )
+                );
+            })
     );
 });
