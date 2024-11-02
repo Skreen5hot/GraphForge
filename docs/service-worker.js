@@ -53,7 +53,7 @@ self.addEventListener('fetch', (event) => {
         caches.match(event.request).then((response) => {
             // Handle navigation requests
             if (event.request.mode === 'navigate') {
-                return response || caches.match('./index.html');
+                return response || caches.match('./');
             }
             // For all other requests, return the cached response or fetch from network
             return response || fetch(event.request).catch(() => caches.match('offline.html'));
