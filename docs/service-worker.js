@@ -13,21 +13,12 @@ const urlsToCache = [
 ];
 
 // Install event - caches app shell files
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            console.log('Caching app shell');
-            return Promise.all(urlsToCache.map(url => {
-                console.log(`Caching: ${url}`);
-                return cache.add(url).catch(error => {
-                    console.error(`Failed to cache: ${url}`, error);
-                });
-            }));
-        })
-    );
+caches.open(CACHE_NAME).then(cache => {
+    console.log('Caching app shell');
+    return cache.addAll(urlsToCache).catch(error => {
+        console.error('Failed to cache:', error);
+    });
 });
-
-
 
 // Activate event - clears old caches
 self.addEventListener('activate', event => {
