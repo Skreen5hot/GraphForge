@@ -114,7 +114,7 @@
     </script>
     <script>
         let appFolderHandle;
-        const PREDEFINED_FOLDER_NAME = "GraphForge";
+        const PREDEFINED_FOLDER_NAME = "Demo Project";
 
         // Open IndexedDB for storing the folder handle
         const dbName = 'GraphForgeDB';
@@ -190,7 +190,7 @@
                 const baseDirectoryHandle = await window.showDirectoryPicker();
                 appFolderHandle = await baseDirectoryHandle.getDirectoryHandle(PREDEFINED_FOLDER_NAME, { create: true });
                 console.log(`App folder "${PREDEFINED_FOLDER_NAME}" created or accessed:`, appFolderHandle);
-
+                createFile();
                 storeFolderHandle(appFolderHandle);
             } catch (error) {
                 console.error("Error accessing or creating folder:", error);
