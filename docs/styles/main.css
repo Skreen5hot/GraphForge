@@ -1,14 +1,19 @@
 /* General styles */
 body {
-    font-family: Arial, sans-serif; /* Use a standard sans-serif font for readability */
+    font-family: Arial, sans-serif;
+    /* Use a standard sans-serif font for readability */
     margin: 0;
     padding: 0;
-    background-color: #f7f7f7; /* Light background for good contrast */
-    color: #333; /* Dark text color for readability */
+    background-color: #f7f7f7;
+    /* Light background for good contrast */
+    color: #333;
+    /* Dark text color for readability */
 }
 
-h1, h2 {
-    color: #005cbf; /* CBP primary color */
+h1,
+h2 {
+    color: #005cbf;
+    /* CBP primary color */
 }
 
 .container {
@@ -16,22 +21,29 @@ h1, h2 {
 }
 
 header {
-    background-color: #005cbf; /* CBP primary color */
+    background-color: #005cbf;
+    /* CBP primary color */
     color: #ffffff;
     padding: 10px 20px;
-    width: 100%; /* Make header 100% width */
-    margin: 0; /* Remove margin around header */
-    position: relative; /* Ensure header positioning does not affect layout */
-    left: 0; /* Align to left edge */
+    width: 100%;
+    /* Make header 100% width */
+    margin: 0;
+    /* Remove margin around header */
+    position: relative;
+    /* Ensure header positioning does not affect layout */
+    left: 0;
+    /* Align to left edge */
 }
 
-header h1, header h2 {
+header h1,
+header h2 {
     color: white;
 }
 
 
 footer {
-    background-color: #005cbf; /* CBP primary color */
+    background-color: #005cbf;
+    /* CBP primary color */
     color: #ffffff;
     text-align: center;
     padding: 10px 0;
@@ -44,85 +56,113 @@ footer {
 /* Sidebar styles */
 .sidebar {
     width: 20%;
-    background-color: #e9ecef; /* Light gray for sidebar */
+    background-color: #e9ecef;
+    /* Light gray for sidebar */
     padding: 15px;
-    border-right: 1px solid #ccc; /* Light border */
+    border-right: 1px solid #ccc;
+    /* Light border */
 }
 
 .sidebar h2 {
-    font-size: 1.5em; /* Adjust font size for headings */
+    font-size: 1.5em;
+    /* Adjust font size for headings */
 }
 
 .sidebar ul {
-    list-style-type: none; /* Remove default list styling */
+    list-style-type: none;
+    /* Remove default list styling */
     padding: 0;
 }
 
 .sidebar ul li {
-    margin: 10px 0; /* Spacing between links */
+    margin: 10px 0;
+    /* Spacing between links */
 }
 
 .sidebar a {
-    text-decoration: none; /* Remove underline */
-    color: #005cbf; /* Link color */
+    text-decoration: none;
+    /* Remove underline */
+    color: #005cbf;
+    /* Link color */
 }
 
 .sidebar a:hover {
-    text-decoration: underline; /* Underline on hover for clarity */
+    text-decoration: underline;
+    /* Underline on hover for clarity */
 }
 
 /* Content styles */
 .content {
-    flex: 1; /* Take remaining space */
+    flex: 1;
+    /* Take remaining space */
     padding: 15px;
 }
 
 .graph-area {
-    border: 1px solid #ccc; /* Border around the graph area */
+    border: 1px solid #ccc;
+    /* Border around the graph area */
     padding: 10px;
-    background-color: #fff; /* White background for the graph */
-    min-height: 300px; /* Minimum height for the graph area */
+    background-color: #fff;
+    /* White background for the graph */
+    min-height: 300px;
+    /* Minimum height for the graph area */
 }
 
 .query-box {
-    margin-top: 20px; /* Space above the query box */
+    margin-top: 20px;
+    /* Space above the query box */
 }
 
 #query-input {
-    width: 100%; /* Full width input */
-    height: 60px; /* Height for better usability */
-    padding: 10px; /* Padding inside the textarea */
-    border: 1px solid #ccc; /* Border for the input */
-    border-radius: 4px; /* Slightly rounded corners */
+    width: 100%;
+    /* Full width input */
+    height: 60px;
+    /* Height for better usability */
+    padding: 10px;
+    /* Padding inside the textarea */
+    border: 1px solid #ccc;
+    /* Border for the input */
+    border-radius: 4px;
+    /* Slightly rounded corners */
 }
 
 button {
-    background-color: #005cbf; /* CBP primary color */
+    background-color: #005cbf;
+    /* CBP primary color */
     color: #ffffff;
     border: none;
     padding: 10px 15px;
-    border-radius: 4px; /* Slightly rounded corners */
+    border-radius: 4px;
+    /* Slightly rounded corners */
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #003d7a; /* Darker shade on hover */
+    background-color: #003d7a;
+    /* Darker shade on hover */
 }
 
 /* Right panel styles */
 .right-panel {
-    width: 25%; /* Set width for the right panel */
-    background-color: #f7f7f7; /* Light background for contrast */
+    width: 25%;
+    /* Set width for the right panel */
+    background-color: #f7f7f7;
+    /* Light background for contrast */
     padding: 15px;
-    border-left: 1px solid #ccc; /* Light border */
+    border-left: 1px solid #ccc;
+    /* Light border */
 }
 
 #query-results {
-    background-color: #fff; /* White background for results */
+    background-color: #fff;
+    /* White background for results */
     padding: 10px;
-    border: 1px solid #ccc; /* Border around results */
-    min-height: 100px; /* Minimum height for results area */
+    border: 1px solid #ccc;
+    /* Border around results */
+    min-height: 100px;
+    /* Minimum height for results area */
 }
+
 /* Button to add new query sections */
 .add-query-button {
     background-color: #005cbf;
@@ -167,15 +207,6 @@ button:hover {
     border-radius: 4px;
 }
 
-
-
-
-
-.sidebar ul {
-    list-style-type: none;
-    padding-left: 20px;
-}
-
 .project-folder {
     cursor: pointer;
     margin: 5px 0;
@@ -211,13 +242,20 @@ button:hover {
 
 @media (max-width: 768px) {
     .main {
-        flex-direction: column; /* Stack elements on smaller screens */
+        flex-direction: column;
+        /* Stack elements on smaller screens */
     }
-    .sidebar, .right-panel {
-        width: 100%; /* Full width on mobile */
-        border: none; /* Remove borders */
-    }
+
+    .sidebar,
     .right-panel {
-        margin-top: 20px; /* Margin above the right panel on mobile */
+        width: 100%;
+        /* Full width on mobile */
+        border: none;
+        /* Remove borders */
+    }
+
+    .right-panel {
+        margin-top: 20px;
+        /* Margin above the right panel on mobile */
     }
 }
