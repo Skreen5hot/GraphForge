@@ -1,6 +1,24 @@
 // Initialize App - handles first query section and new sections
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    setupRouting();
+
+    const sidebar = document.querySelector('.sidebar');
+    const rightPanel = document.querySelector('.right-panel');
+    const sidebarToggle = document.querySelector('.toggle-sidebar');
+    const rightPanelToggle = document.querySelector('.toggle-right-panel');
+
+    // Toggle sidebar visibility
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        sidebarToggle.textContent = sidebar.classList.contains('collapsed') ? '❯' : '❮';
+    });
+
+    // Toggle right panel visibility
+    rightPanelToggle.addEventListener('click', () => {
+        rightPanel.classList.toggle('collapsed');
+        rightPanelToggle.textContent = rightPanel.classList.contains('collapsed') ? '❮' : '❯';
+    });
 });
 
 function initializeApp() {
@@ -86,3 +104,17 @@ function runQuery(query, resultsBox) {
         Plotly.newPlot(chartContainer, data);
     }, 1000);
 }
+
+        // Set up routing for SPA
+        function setupRouting() {
+          const navLinks = document.querySelectorAll('.nav-link');
+          const sections = document.querySelectorAll('.page-section');
+          function navigate() {
+              const hash = location.hash || '#home';
+              sections.forEach(section => section.classList.add('hidden'));
+              document.querySelector(hash).classList.remove('hidden');
+          }
+          navLinks.forEach(link => link.addEventListener('click', () => navigate()));
+          window.addEventListener('hashchange', navigate);
+          navigate(); // Initial load
+      }

@@ -16,10 +16,6 @@ h2 {
     /* CBP primary color */
 }
 
-.container {
-    margin: auto;
-}
-
 header {
     background-color: #005cbf;
     /* CBP primary color */
@@ -49,18 +45,45 @@ footer {
     padding: 10px 0;
 }
 
-.main {
+.container {
     display: flex;
+    transition: all 0.3s ease; /* Smooth transition for container */
 }
 
-/* Sidebar styles */
+.main {
+    display: flex;
+    flex: 1;
+    transition: all 0.3s ease; /* Smooth transition for main content */
+}
+
 .sidebar {
-    width: 20%;
-    background-color: #e9ecef;
-    /* Light gray for sidebar */
+    width: 200px;
+    transition: width 0.3s ease; /* Smooth transition for sidebar */
+    background: #e9ecef;
     padding: 15px;
+    white-space: nowrap; /* Prevent text wrapping */
+    position: relative;
     border-right: 1px solid #ccc;
-    /* Light border */
+}
+
+button.toggle-sidebar {
+    position: absolute;
+    right: -10px;
+    top: calc(50% - 27px);
+    padding: 15px 5px;
+    background-color: lightgray;
+}
+
+button.toggle-sidebar:hover {
+    background-color: gray;
+}
+
+.sidebar.collapsed {
+    width: 0px; /* Collapsed width */
+}
+
+.sidebar.collapsed h2, .sidebar.collapsed ul {
+    display: none; /* Hide title and list when collapsed */
 }
 
 .sidebar h2 {
@@ -89,13 +112,6 @@ footer {
 .sidebar a:hover {
     text-decoration: underline;
     /* Underline on hover for clarity */
-}
-
-/* Content styles */
-.content {
-    flex: 1;
-    /* Take remaining space */
-    padding: 15px;
 }
 
 .graph-area {
@@ -144,13 +160,38 @@ button:hover {
 
 /* Right panel styles */
 .right-panel {
-    width: 25%;
-    /* Set width for the right panel */
-    background-color: #f7f7f7;
-    /* Light background for contrast */
+    width: 200px;
+    transition: width 0.3s ease; /* Smooth transition for right panel */
+    background: #f4f4f4;
     padding: 15px;
+    white-space: nowrap; /* Prevent text wrapping */
+    position: relative;
     border-left: 1px solid #ccc;
-    /* Light border */
+}
+
+button.toggle-right-panel {
+    position: absolute;
+    left: -10px;
+    top: calc(50% - 27px);
+    padding: 15px 5px;
+    background-color: lightgray;
+}
+button.toggle-right-panel:hover {
+    background-color: gray;
+}
+
+.right-panel.collapsed {
+    width: 0px; /* Collapsed width */
+}
+
+.right-panel.collapsed h2, .right-panel.collapsed p {
+    display: none; /* Hide title and paragraph when collapsed */
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+    transition: margin 0.3s ease; /* Smooth transition for content */
 }
 
 #query-results {
@@ -239,6 +280,12 @@ button:hover {
 .context-menu li:hover {
     background-color: #e0e0e0;
 }
+
+.hidden {
+    display: none;
+}
+
+
 
 
 @media (max-width: 768px) {

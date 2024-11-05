@@ -4,16 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GraphForge</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="styles/main.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" defer></script>
-    <link rel="icon" type="image/png" href="images/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="images/favicon.svg" />
-<link rel="shortcut icon" href="images/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png" />
-<link rel="manifest" href="site.webmanifest" />
 </head>
 <body>
     <header>
@@ -24,24 +17,39 @@
         <div class="main">
             <!-- Sidebar -->
             <aside class="sidebar">
+                <button class="toggle-sidebar">❮</button>
                 <h2>Navigation</h2>
                 <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Saved Queries</a></li>
-                    <li><a href="#">Settings</a></li>
+                    <li><a href="#home" class="nav-link">Home</a></li>
+                    <li><a href="#saved-queries" class="nav-link">Saved Queries</a></li>
+                    <li><a href="#settings" class="nav-link">Settings</a></li>
                 </ul>
             </aside>
 
-            <!-- Content area -->
+            <!-- Content area with SPA sections -->
             <div class="content">
-                <button id="add-query-section" class="add-query-button">+ New Query</button>
-                <section id="query-sections-container" class="query-sections-container">
-                    <!-- New query sections will be added here dynamically -->
+                <!-- Home section -->
+                <section id="home" class="page-section">
+                    <button id="add-query-section" class="add-query-button">+ New Query</button>
+                    <section id="query-sections-container" class="query-sections-container"></section>
+                </section>
+
+                <!-- Saved Queries section -->
+                <section id="saved-queries" class="page-section hidden">
+                    <h2>Saved Queries</h2>
+                    <p>Your saved queries will be displayed here.</p>
+                </section>
+
+                <!-- Settings section -->
+                <section id="settings" class="page-section hidden">
+                    <h2>Settings</h2>
+                    <p>Application settings go here.</p>
                 </section>
             </div>
 
             <!-- Right Panel -->
-            <aside class="right-panel">
+            <aside class="right-panel collapsed">
+                <button class="toggle-right-panel">❯</button>
                 <h2>Details Panel</h2>
                 <p>Selected nodes and relationships will appear here.</p>
             </aside>
@@ -52,6 +60,7 @@
     </footer>
 
     <script src="scripts/app.js"></script>
-
 </body>
 </html>
+
+
