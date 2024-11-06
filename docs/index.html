@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,9 +14,16 @@
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png" />
     <link rel="manifest" href="site.webmanifest" />
 </head>
+
 <body>
     <header>
         <h1>GraphForge</h1>
+        <div class="topnav" id="myTopnav">
+            <a href="#home" class="active" onclick="setActive(this)">Home</a>
+            <a href="#saved-queries" onclick="setActive(this)">Saved Queries</a>
+            <a href="#settings" onclick="setActive(this)">Settings</a>
+            <a href="javascript:void(0);" class="icon" onclick="menuFunction()">☰</a>
+        </div>
     </header>
 
     <div class="container">
@@ -23,26 +31,68 @@
             <!-- Sidebar -->
             <aside class="sidebar">
                 <button class="toggle-sidebar">❮</button>
-                <h2>Navigation</h2>
-                <ul>
-                    <li><a href="#home" class="nav-link">Home</a></li>
-                    <li><a href="#saved-queries" class="nav-link">Saved Queries</a></li>
-                    <li><a href="#settings" class="nav-link">Settings</a></li>
-                </ul>
+                <div class="project-container">
+                    <div id="project-menu" class="project-menu">
+                        <ul>
+                            <li class="project" data-name="My First Project">
+                                <div class="projectHeader">My First Project</div>
+                                <ul>
+                                    <li class="project-folder" data-name="Your Data My First Project">🖿 Your Data
+                                        <span class="upload-doc" onclick="uploadDocument(event)">+ Doc</span>
+                                        <ul id="fileNames"></ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="project" data-name="My Second Project">
+                                <div class="projectHeader">My Secpnd Project</div>                                <ul>
+                                    <li class="project-folder" data-name="Your Data My Second Project">🖿 Your Data
+                                        <span class="upload-doc" onclick="uploadDocument(event)">+ Doc</span>
+                                        <ul id="fileNames"></ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <!-- Create New Project button -->
+                        <button id="createNewProject" onclick="createNewProject()">+ New Project</button>
+                    </div>
+
+                    <div id="context-menu" class="context-menu">
+                        <ul>
+                            <li id="edit">Edit</li>
+                            <li id="rename">Rename</li>
+                            <li id="duplicate">Duplicate</li>
+                            <li id="delete">Delete</li>
+                        </ul>
+                    </div>
+                </div>
             </aside>
 
             <!-- Content area with SPA sections -->
             <div class="content">
                 <!-- Home section -->
                 <section id="home" class="page-section">
-                    <button id="add-query-section" class="add-query-button">+ New Query</button>
-                    <section id="query-sections-container" class="query-sections-container"></section>
+                    <h2>Initialize Website</h2>
+                    <button onclick="createAppFolder()">Initialize GraphForge</button>
+                    <p>To get started, please create a folder on your computer where GraphForge will have read/write
+                        access. This
+                        folder will allow you to store and manage your data securely.</p>
+                    <h3>Important Information:</h3>
+                    <ul>
+                        <li><strong>User Control:</strong> You will be prompted to select the folder you'd like to grant
+                            access to.
+                            Your privacy is our priority; we will not see the contents of your folder.</li>
+                        <li><strong>Secure Interaction:</strong> All interactions are conducted securely, ensuring your
+                            data remains
+                            private.</li>
+                    </ul>
+                    <p>Once you have created the folder and selected it, click the "Initialize Website" button to
+                        proceed!</p>
                 </section>
 
                 <!-- Saved Queries section -->
                 <section id="saved-queries" class="page-section hidden">
-                    <h2>Saved Queries</h2>
-                    <p>Your saved queries will be displayed here.</p>
+                    <button id="add-query-section" class="add-query-button">+ New Query</button>
+                    <section id="query-sections-container" class="query-sections-container"></section>
                 </section>
 
                 <!-- Settings section -->
@@ -60,12 +110,8 @@
             </aside>
         </div>
     </div>
-    <footer>
-        <p>&copy; 2024 Neo4j-Like Browser</p>
-    </footer>
 
     <script src="scripts/app.js"></script>
 </body>
+
 </html>
-
-

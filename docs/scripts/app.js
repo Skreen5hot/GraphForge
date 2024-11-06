@@ -21,6 +21,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function menueFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+function setActive(element) {
+  // Remove the "active" class from all links
+  var links = document.querySelectorAll(".topnav a");
+  links.forEach(link => link.classList.remove("active"));
+  
+  // Add the "active" class to the clicked link
+  element.classList.add("active");
+}
 function initializeApp() {
 
   if ('serviceWorker' in navigator) {
