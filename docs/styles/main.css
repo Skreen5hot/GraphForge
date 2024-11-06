@@ -356,7 +356,7 @@ button.toggle-right-panel:hover {
   /* Styling for the "Create New Project" button */
   #createNewProject {
     width: 100%;
-    background-color: ##005cbf;
+    background-color: #005cbf;
     color: white;
     border: none;
     padding: 10px;
