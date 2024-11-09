@@ -248,9 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
 initializeMessageSection.classList.add('hidden'); // Remove hidden class if the folder is not initialized
   });
 
-      // Button to read the directory and log its contents
-  readDirectoryButton.addEventListener('click', readDirectory);
-
   // Initialize app when page loads
   initializeApp();
 });

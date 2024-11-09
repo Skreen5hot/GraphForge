@@ -1,6 +1,5 @@
 // Initialize App - handles first query section and new sections
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
     setupRouting();
 
     const sidebar = document.querySelector('.sidebar');
@@ -134,3 +133,16 @@ function runQuery(query, resultsBox) {
           window.addEventListener('hashchange', navigate);
           navigate(); // Initial load
       }
+
+        // Check if the protocol is 'file:' (indicating a local file system)
+  if (window.location.protocol !== 'file:') {
+    // Create a link element for the manifest
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = 'manifest.json';  // Adjust path as needed
+
+    // Append it to the head
+    document.head.appendChild(link);
+  } else {
+    console.log("Manifest not loaded due to local environment.");
+  }
