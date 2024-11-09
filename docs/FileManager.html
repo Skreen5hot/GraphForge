@@ -1,268 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GraphForge File Access</title>
     <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-</head>
-
-<body>
+  </head>
+  <body>
     <h1>GraphForge File Access</h1>
-    <button onclick="createAppFolder()">Initialize App Folder</button>
-    <button onclick="listFiles()">List Files in Folder</button>
-    <button onclick="createFile()">Create Example File</button>
-    <button onclick="readFileContent()">Read Example File</button>
-
+    <button id="initializeButton">Initialize App Folder</button>
+    <button id="createDemo">Create Demo Project</button>
+    <button id="showDirectory">Show Directory</button>
     <div class="initialize-website-info">
-        <h2>Initialize Website</h2>
-        <button onclick="createAppFolder()">Initialize GraphForge</button>
-
-
-        <p>To get started, please create a folder on your computer where GraphForge will have read/write access. This
-            folder will allow you to store and manage your data securely.</p>
-
-        <h3>Important Information:</h3>
-        <ul>
-            <li><strong>User Control:</strong> You will be prompted to select the folder you'd like to grant access to.
-                Your privacy is our priority; we will not see the contents of your folder.</li>
-            <li><strong>Secure Interaction:</strong> All interactions are conducted securely, ensuring your data remains
-                private.</li>
-        </ul>
-
-        <p>Once you have created the folder and selected it, click the "Initialize Website" button to proceed!</p>
-
+      <h2>Initialize Website</h2>
+      <button id="initializeAppButton">Initialize GraphForge</button>
+      <p>To get started, please create a folder on your computer where GraphForge will have read/write access.</p>
     </div>
-    <div id="sidebar" class="sidebar">
-        <ul>
-            <li class="project" data-name="My First Project">
-                My First Project
-                <ul>
-                    <li class="project-folder" data-name="Your Data My First Project">
-                        <i class="fas fa-folder"></i> Your Data
-                        <button class="upload-doc" onclick="uploadDocument(event)"><i class="fas fa-plus"></i>
-                            Doc</button>
-                        <ul id="fileNames"></ul>
-                    </li>
-                </ul>
-            </li>
-            <li class="project" data-name="My Second Project">
-                My Second Project
-                <ul>
-                    <li class="project-folder" data-name="Your Data My Second Project">
-                        <i class="fas fa-folder"></i> Your Data
-                        <button class="upload-doc" onclick="uploadDocument(event)"><i class="fas fa-plus"></i>
-                            Doc</button>
-                        <ul id="fileNames"></ul>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-        <!-- Create New Project button -->
-        <button id="createNewProject" onclick="createNewProject()">
-            <i class="fas fa-plus"></i> New Project
-        </button>
+    <div id="project-menu" class="project-menu">
+      <button id="createNewProject" onclick="createNewProject()">+ New Project</button>
     </div>
-
     <div id="context-menu" class="context-menu">
-        <ul>
-            <li id="edit">Edit</li>
-            <li id="rename">Rename</li>
-            <li id="duplicate">Duplicate</li>
-            <li id="delete">Delete</li>
-        </ul>
+      <ul>
+        <li id="edit">Edit</li>
+        <li id="rename">Rename</li>
+        <li id="duplicate">Duplicate</li>
+        <li id="delete">Delete</li>
+      </ul>
     </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const contextMenu = document.getElementById('context-menu');
+      const PREDEFINED_FOLDER_NAME = "GraphForge";
+      const dbName = 'GraphForgeDB';
+      let appFolderHandle;
 
-            // Show context menu
-            document.querySelectorAll('.project, .project-folder, .file').forEach(item => {
-                item.addEventListener('contextmenu', (event) => {
-                    event.preventDefault();
-                    const { clientX: mouseX, clientY: mouseY } = event;
-
-                    contextMenu.style.top = mouseY + 'px';
-                    contextMenu.style.left = mouseX + 'px';
-                    contextMenu.style.display = 'block';
-
-                    // Store selected item for later actions
-                    contextMenu.setAttribute('data-selected', item.getAttribute('data-name'));
-                });
-            });
-
-
-            // Hide context menu on click elsewhere
-            window.addEventListener('click', () => {
-                contextMenu.style.display = 'none';
-            });
-
-            // Handle context menu actions
-            contextMenu.addEventListener('click', (event) => {
-                const action = event.target.id;
-                const selectedItem = contextMenu.getAttribute('data-selected');
-                if (action && selectedItem) {
-                    alert(`${action.charAt(0).toUpperCase() + action.slice(1)}: ${selectedItem}`);
-                    contextMenu.style.display = 'none';
-                }
-            });
+      // Pure function to open IndexedDB and return a Promise that resolves with the DB instance
+      function openDatabase() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(dbName, 1);
+          request.onupgradeneeded = event => {
+            const db = event.target.result;
+            db.createObjectStore('handles');
+          };
+          request.onsuccess = event => resolve(event.target.result);
+          request.onerror = event => reject(event.target.error);
         });
+      }
+
+      // Pure function to store a folder handle in IndexedDB
+      function storeFolderHandle(db, handle) {
+        const transaction = db.transaction(['handles'], 'readwrite');
+        const store = transaction.objectStore('handles');
+        const request = store.put(handle, 'appFolderHandle');
+        return new Promise((resolve, reject) => {
+          request.onsuccess = () => resolve();
+          request.onerror = (event) => reject(event.target.error);
+        });
+      }
+
+      // Pure function to retrieve a folder handle from IndexedDB
+      function getStoredFolderHandle(db) {
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(['handles'], 'readonly');
+          const store = transaction.objectStore('handles');
+          const request = store.get('appFolderHandle');
+          request.onsuccess = event => resolve(event.target.result);
+          request.onerror = (event) => reject(event.target.error);
+        });
+      }
+
+      // Pure function to create a folder handle inside the app folder
+      async function createAppFolder() {
+        try {
+          const baseDirectoryHandle = await window.showDirectoryPicker();
+          const folderHandle = await baseDirectoryHandle.getDirectoryHandle(PREDEFINED_FOLDER_NAME, { create: true });
+          return folderHandle;
+        } catch (error) {
+          throw new Error("Error accessing or creating folder: " + error);
+        }
+      }
+      async function createDemo(appFolderHandle) {
+        if (!appFolderHandle) {
+          console.error("App folder handle not found. Initialize the app first.");
+          return;
+        }
+        try {
+          // Create Project Demo folder
+          const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo", {
+            create: true
+          });
+          // Create Source Data folder inside Project Demo
+          const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data", {
+            create: true
+          });
+          // Create and write to yourData.txt inside Source Data
+          const yourDataFile = await sourceDataFolder.getFileHandle("yourData.txt", {
+            create: true
+          });
+          const writable = await yourDataFile.createWritable();
+          await writable.write("Sample data for your demo.");
+          await writable.close();
+          console.log("Demo project created successfully.");
+        } catch (error) {
+          console.error("Error creating demo project:", error);
+        }
+      }
+      // Function to initialize the app by setting up the database and retrieving the stored folder handle
+      async function initializeApp() {
+        const db = await openDatabase();
+        appFolderHandle = await getStoredFolderHandle(db);
+        if (!appFolderHandle) {
+          console.log("App folder not initialized.");
+        }
+      }
+
+      // Function to show the directory in the UI
+      async function showDirectory() {
+        if (!appFolderHandle) {
+          alert("Please initialize the app folder first.");
+          return;
+        }
+
+        const projectMenu = document.getElementById('project-menu');
+        const projectList = document.createElement('ul');
+
+        try {
+          const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo");
+          const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data");
+
+          // Add Project Demo to the list
+          const projectItem = document.createElement('li');
+          projectItem.className = "project";
+          projectItem.setAttribute('data-name', "Project Demo");
+
+          const projectHeader = document.createElement('div');
+          projectHeader.className = "projectHeader";
+          projectHeader.textContent = "Project Demo";
+
+          const sourceDataItem = document.createElement('li');
+          sourceDataItem.className = "project-folder";
+          sourceDataItem.setAttribute('data-name', "Source Data");
+          sourceDataItem.innerHTML = `🖿 Source Data <span class="upload-doc" onclick="uploadDocument(event)">+ Doc</span>`;
+
+          // Create the fileNames <ul>
+          const fileNamesList = document.createElement('ul');
+          fileNamesList.id = "fileNames";
+
+          const fileItem = document.createElement('li');
+          fileItem.className = "file";
+          fileItem.setAttribute('data-name', "test file");
+          fileItem.textContent = "test file.txt";
+
+          fileNamesList.appendChild(fileItem);
+          sourceDataItem.appendChild(fileNamesList);
+          projectItem.appendChild(projectHeader);
+          projectItem.appendChild(sourceDataItem);
+          projectList.appendChild(projectItem);
+
+          // Insert the new directory list into the project menu
+          projectMenu.appendChild(projectList);
+        } catch (error) {
+          console.error("Error displaying directory:", error);
+        }
+      }
+
+      // Event listeners for UI buttons
+      document.addEventListener('DOMContentLoaded', () => {
+        const initializeButton = document.getElementById('initializeButton');
+        const createDemoButton = document.getElementById('createDemo');
+        const showDirectoryButton = document.getElementById('showDirectory');
+
+        initializeButton.addEventListener('click', async () => {
+          const db = await openDatabase();
+          appFolderHandle = await createAppFolder();
+          await storeFolderHandle(db, appFolderHandle);
+        });
+
+        createDemoButton.addEventListener('click', async () => {
+          if (!appFolderHandle) {
+            alert("Please initialize the app folder first.");
+            return;
+          }
+          await createDemo(appFolderHandle);
+        });
+
+        // Show directory button click event
+        showDirectoryButton.addEventListener('click', showDirectory);
+
+        // Initialize app when page loads
+        initializeApp();
+      });
     </script>
-    <script>
-        let appFolderHandle;
-        const PREDEFINED_FOLDER_NAME = "Demo Project";
-
-        // Open IndexedDB for storing the folder handle
-        const dbName = 'GraphForgeDB';
-        let db;
-
-        // Function to open the database
-        function openDatabase() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(dbName, 1);
-
-                request.onupgradeneeded = (event) => {
-                    db = event.target.result;
-                    db.createObjectStore('handles');
-                };
-
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve();
-                };
-
-                request.onerror = (event) => {
-                    console.error("Database error:", event.target.error);
-                    reject(event.target.error);
-                };
-            });
-        }
-
-        // Store folder handle in IndexedDB
-        function storeFolderHandle(handle) {
-            const transaction = db.transaction(['handles'], 'readwrite');
-            const store = transaction.objectStore('handles');
-            const request = store.put(handle, 'appFolderHandle');
-
-            request.onsuccess = () => {
-                console.log("Folder handle saved in IndexedDB.");
-            };
-
-            request.onerror = (event) => {
-                console.error("Error saving folder handle:", event.target.error);
-            };
-        }
-
-        // Retrieve folder handle from IndexedDB
-        function getStoredFolderHandle() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['handles'], 'readonly');
-                const store = transaction.objectStore('handles');
-                const request = store.get('appFolderHandle');
-
-                request.onsuccess = (event) => {
-                    const handle = event.target.result;
-                    resolve(handle);
-                };
-
-                request.onerror = (event) => {
-                    console.error("Error retrieving folder handle:", event.target.error);
-                    reject(event.target.error);
-                };
-            });
-        }
-
-        // Check if we have permission to access the folder
-        async function verifyPermission(handle) {
-            const options = { mode: 'readwrite' };
-            if (await handle.queryPermission(options) === 'granted') return true;
-            if (await handle.requestPermission(options) === 'granted') return true;
-            return false;
-        }
-
-        // Create or retrieve the GraphForge folder handle
-        async function createAppFolder() {
-            try {
-                const baseDirectoryHandle = await window.showDirectoryPicker();
-                appFolderHandle = await baseDirectoryHandle.getDirectoryHandle(PREDEFINED_FOLDER_NAME, { create: true });
-                console.log(`App folder "${PREDEFINED_FOLDER_NAME}" created or accessed:`, appFolderHandle);
-                createFile();
-                storeFolderHandle(appFolderHandle);
-            } catch (error) {
-                console.error("Error accessing or creating folder:", error);
-                alert("Please select a folder outside of system-protected directories like Documents, Desktop, or Downloads.");
-            }
-        }
-
-        // Initialize the app on load
-        async function initializeApp() {
-            await openDatabase(); // Open the database first
-            appFolderHandle = await getStoredFolderHandle();
-            if (!appFolderHandle) {
-                console.log("App folder not initialized.");
-            } else {
-                console.log(`App folder "${PREDEFINED_FOLDER_NAME}" handle retrieved from IndexedDB.`);
-            }
-        }
-
-        // List files in the folder
-        async function listFiles() {
-            await initializeApp(); // Ensure the app is initialized first
-
-            if (!appFolderHandle) {
-                alert("Please initialize the app folder first.");
-                return;
-            }
-
-            const fileNamesElement = document.getElementById("fileNames");
-            fileNamesElement.innerHTML = ""; // Clear previous file names
-
-            for await (const entry of appFolderHandle.values()) {
-                const listItem = document.createElement("li");
-                listItem.textContent = entry.name; // Add file name to list
-                listItem.classList.add("file");
-                fileNamesElement.appendChild(listItem);
-            }
-        }
-
-        // Create and write to a file
-        async function createFile() {
-            if (!appFolderHandle) {
-                alert("Please initialize the app folder first.");
-                return;
-            }
-            const fileHandle = await appFolderHandle.getFileHandle('example.txt', { create: true });
-            const writableStream = await fileHandle.createWritable();
-            await writableStream.write("Hello, this is GraphForge!");
-            await writableStream.close();
-            console.log("Content written to file: example.txt");
-        }
-
-        // Read file content
-        async function readFileContent() {
-            if (!appFolderHandle) {
-                alert("Please initialize the app folder first.");
-                return;
-            }
-            try {
-                const fileHandle = await appFolderHandle.getFileHandle('example.txt');
-                const file = await fileHandle.getFile();
-                const content = await file.text();
-                alert(`File content of example.txt:\n${content}`);
-            } catch (error) {
-                console.error("Error reading file:", error);
-                alert("Error reading file. Ensure the file exists.");
-            }
-        }
-
-        // Initialize the app when the page loads
-        window.onload = initializeApp;
-    </script>
-
-</body>
-
+  </body>
 </html>
