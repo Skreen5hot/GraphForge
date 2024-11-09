@@ -326,9 +326,9 @@ button.toggle-right-panel:hover {
       padding-left: 25px; /* Indent for nested folder */
   }
   .file {
-    color: #444;
     font-size: 14px;
     margin-bottom: 5px;
+    padding-left: 25px;
   }
   
   /* Styling for the upload document button */

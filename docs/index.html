@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GraphForge</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles/main.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" defer></script>
@@ -12,7 +13,6 @@
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg" />
     <link rel="shortcut icon" href="images/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png" />
-    <link rel="manifest" href="site.webmanifest" />
 </head>
 
 <body>
@@ -33,25 +33,7 @@
                 <button class="toggle-sidebar">❮</button>
                 <div class="project-container">
                     <div id="project-menu" class="project-menu">
-                        <ul>
-                            <li class="project" data-name="My First Project">
-                                <div class="projectHeader">My First Project</div>
-                                <ul>
-                                    <li class="project-folder" data-name="Your Data My First Project">🖿 Your Data
-                                        <span class="upload-doc" onclick="uploadDocument(event)">+ Doc</span>
-                                        <ul id="fileNames"></ul>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li class="project" data-name="My Second Project">
-                                <div class="projectHeader">My Secpnd Project</div>                                <ul>
-                                    <li class="project-folder" data-name="Your Data My Second Project">🖿 Your Data
-                                        <span class="upload-doc" onclick="uploadDocument(event)">+ Doc</span>
-                                        <ul id="fileNames"></ul>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
+                        <ul id="directoryList"></ul>
                         <!-- Create New Project button -->
                         <button id="createNewProject" onclick="createNewProject()">+ New Project</button>
                     </div>
@@ -71,22 +53,25 @@
             <div class="content">
                 <!-- Home section -->
                 <section id="home" class="page-section">
-                    <h2>Initialize Website</h2>
-                    <button onclick="createAppFolder()">Initialize GraphForge</button>
-                    <p>To get started, please create a folder on your computer where GraphForge will have read/write
-                        access. This
-                        folder will allow you to store and manage your data securely.</p>
-                    <h3>Important Information:</h3>
-                    <ul>
-                        <li><strong>User Control:</strong> You will be prompted to select the folder you'd like to grant
-                            access to.
-                            Your privacy is our priority; we will not see the contents of your folder.</li>
-                        <li><strong>Secure Interaction:</strong> All interactions are conducted securely, ensuring your
-                            data remains
-                            private.</li>
-                    </ul>
-                    <p>Once you have created the folder and selected it, click the "Initialize Website" button to
-                        proceed!</p>
+                    <section id="initializeMessage" class="page-section hidden">
+                        <h2>Initialize Website</h2>
+                        <p>To get started, please create a folder on your computer where GraphForge will have read/write
+                            access. This folder will allow you to store and manage your data securely.</p>
+                        <button id="initializeButton">Initialize GraphForge</button>
+                        <h3>Important Information:</h3>
+                        <ul>
+                            <li><strong>User Control:</strong> You will be prompted to select the folder you'd like to
+                                grant
+                                access to.
+                                Your privacy is our priority; we will not see the contents of your folder.</li>
+                            <li><strong>Secure Interaction:</strong> All interactions are conducted securely, ensuring
+                                your
+                                data remains
+                                private.</li>
+                        </ul>
+                        <p>Once you have created the folder and selected it, click the "Initialize Website" button to
+                            proceed!</p>
+                    </section>
                 </section>
 
                 <!-- Saved Queries section -->
@@ -112,6 +97,7 @@
     </div>
 
     <script src="scripts/app.js"></script>
+    <script src="scripts/document.js"></script>
 </body>
 
 </html>
