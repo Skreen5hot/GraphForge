@@ -8,16 +8,23 @@
   </head>
   <body>
     <h1>GraphForge File Access</h1>
-    <button id="initializeButton">Initialize App Folder</button>
-    <button id="createDemo">Create Demo Project</button>
-    <button id="showDirectory">Show Directory</button>
-    <div class="initialize-website-info">
-      <h2>Initialize Website</h2>
-      <button id="initializeAppButton">Initialize GraphForge</button>
-      <p>To get started, please create a folder on your computer where GraphForge will have read/write access.</p>
-    </div>
+    <section id="initializeMessage" class="page-section hidden">
+                    <h2>Initialize Website</h2>
+                    <p>To get started, please create a folder on your computer where GraphForge will have read/write access. This folder will allow you to store and manage your data securely.</p>
+    <button id="initializeButton">Initialize GraphForge</button>
+                    <h3>Important Information:</h3>
+                    <ul>
+                        <li><strong>User Control:</strong> You will be prompted to select the folder you'd like to grant
+                            access to.
+                            Your privacy is our priority; we will not see the contents of your folder.</li>
+                        <li><strong>Secure Interaction:</strong> All interactions are conducted securely, ensuring your
+                            data remains
+                            private.</li>
+                    </ul>
+                    <p>Once you have created the folder and selected it, click the "Initialize Website" button to
+                        proceed!</p>
+                </section>
     <div id="project-menu" class="project-menu">
-      <button id="createNewProject" onclick="createNewProject()">+ New Project</button>
     </div>
     <div id="context-menu" class="context-menu">
       <ul>
@@ -72,6 +79,10 @@
         try {
           const baseDirectoryHandle = await window.showDirectoryPicker();
           const folderHandle = await baseDirectoryHandle.getDirectoryHandle(PREDEFINED_FOLDER_NAME, { create: true });
+
+          // Now that the app folder is created, create the demo project
+          await createDemo(folderHandle);
+
           return folderHandle;
         } catch (error) {
           throw new Error("Error accessing or creating folder: " + error);
@@ -103,12 +114,17 @@
           console.error("Error creating demo project:", error);
         }
       }
-      // Function to initialize the app by setting up the database and retrieving the stored folder handle
+     // Function to initialize the app by setting up the database and retrieving the stored folder handle
       async function initializeApp() {
         const db = await openDatabase();
         appFolderHandle = await getStoredFolderHandle(db);
         if (!appFolderHandle) {
           console.log("App folder not initialized.");
+                      const initializeMessageSection = document.getElementById('initializeMessage');
+    initializeMessageSection.classList.remove('hidden'); // Remove hidden class if the folder is not initialized
+        } else {
+          await showDirectory(); // Call showDirectory if folder exists
+
         }
       }
 
@@ -166,24 +182,16 @@
       document.addEventListener('DOMContentLoaded', () => {
         const initializeButton = document.getElementById('initializeButton');
         const createDemoButton = document.getElementById('createDemo');
-        const showDirectoryButton = document.getElementById('showDirectory');
 
         initializeButton.addEventListener('click', async () => {
           const db = await openDatabase();
           appFolderHandle = await createAppFolder();
           await storeFolderHandle(db, appFolderHandle);
+          // Call showDirectory to display the folder content at the end
+          await showDirectory();
+                                const initializeMessageSection = document.getElementById('initializeMessage');
+    initializeMessageSection.classList.add('hidden'); // Remove hidden class if the folder is not initialized
         });
-
-        createDemoButton.addEventListener('click', async () => {
-          if (!appFolderHandle) {
-            alert("Please initialize the app folder first.");
-            return;
-          }
-          await createDemo(appFolderHandle);
-        });
-
-        // Show directory button click event
-        showDirectoryButton.addEventListener('click', showDirectory);
 
         // Initialize app when page loads
         initializeApp();
