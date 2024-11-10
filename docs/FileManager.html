@@ -8,7 +8,7 @@
   </head>
   <body>
     <h1>GraphForge File Access</h1>
-      <button id="readDirectoryButton">Read Directory</button>
+        <button id="reAuthDir" class="hidden">Re-Authorize Directory</button>
     <section id="initializeMessage" class="page-section hidden">
                     <h2>Initialize Website</h2>
                     <p>To get started, please create a folder on your computer where GraphForge will have read/write access. This folder will allow you to store and manage your data securely.</p>
@@ -27,6 +27,8 @@
                 </section>
     <div id="project-menu" class="project-menu">
       <ul id="directoryList"></ul>
+      <button id="createNewProject" onclick="createNewProject()">+ New Project</button>
+
     </div>
     <div id="context-menu" class="context-menu">
       <ul>
@@ -146,6 +148,23 @@ async function createDemo(appFolderHandle) {
         }
       }
 
+            // Function to re-authorize directory
+      async function reAuthorizeDirectory() {
+        try {
+          const permission = await appFolderHandle.requestPermission({ mode: 'readwrite' });
+          if (permission === 'granted') {
+            console.log("Directory access re-authorized.");
+            document.getElementById('reAuthDir').classList.add('hidden'); // Hide the Re-Authorize button after successful re-authorization
+
+            await showDirectory();
+          } else {
+            console.warn("Directory re-authorization was denied.");
+          }
+        } catch (error) {
+          console.error("Error re-authorizing directory:", error);
+        }
+      }
+
 async function showDirectory() {
   const directoryListElement = document.getElementById("directoryList");
 
@@ -161,6 +180,12 @@ async function showDirectory() {
   }
 
   try {
+          const permission = await appFolderHandle.queryPermission({ mode: 'readwrite' });
+          if (permission !== 'granted') {
+            alert("Access to the directory is not authorized. Please re-authorize.");
+              document.getElementById('reAuthDir').classList.remove('hidden');
+            return;
+          }
     // Clear the existing list before showing the new structure
     directoryListElement.innerHTML = '';
 
@@ -227,58 +252,88 @@ async function showEntireDirectory(directoryHandle, currentPath, parentElement) 
   }
 }
 
-
-async function readDirectory() {
-  if (!appFolderHandle) {
-    alert("Please initialize the app folder first.");
-    return;
-  }
-
+// Function to upload a document to a specific project's "Source Data" directory
+async function uploadDocument(event) {
   try {
-    // Log all entries in the root folder to see available directories
-    console.log("Listing available folders inside the root appFolderHandle:");
+    // Get the closest elements with the 'project' and 'project-folder' classes
+    const folderElement = event.target.closest('.project-folder');
+    const projectElement = event.target.closest('.project');
 
-    // Iterate through all top-level entries
-    for await (const entry of appFolderHandle.values()) {
-      console.log(`Found entry: ${entry.kind} - ${entry.name}`);
+    // Retrieve the project and folder names from data attributes
+    const projectName = projectElement.getAttribute('data-name');
+    const folderName = folderElement.getAttribute('data-name');
 
-      if (entry.kind === 'directory') {
-        // Recursively read contents of each project directory
-        await readEntireDirectory(entry, `/${entry.name}`);
-      }
+    if (!projectName || !folderName) {
+      console.error("Project or folder name not found.");
+      return;
     }
+
+    // Navigate through the directory structure to find the target folder
+    const projectHandle = await appFolderHandle.getDirectoryHandle(projectName, { create: false });
+    const targetFolderHandle = await projectHandle.getDirectoryHandle(folderName, { create: false });
+
+    // Prompt the user to select a file for upload
+    const [fileHandle] = await window.showOpenFilePicker();
+    if (!fileHandle) {
+      console.log("No file selected.");
+      return;
+    }
+
+    // Create or retrieve a file handle in the specified folder
+    const newFileHandle = await targetFolderHandle.getFileHandle(fileHandle.name, { create: true });
+
+    // Request write permission for the new file handle
+    const permission = await newFileHandle.requestPermission({ mode: 'readwrite' });
+    if (permission !== 'granted') {
+      console.error("Permission denied for writing to the file.");
+      return;
+    }
+
+    // Write file content to the new file handle
+    const writable = await newFileHandle.createWritable();
+    const fileData = await fileHandle.getFile();
+    await writable.write(fileData);
+    await writable.close();
+    await showDirectory();
+    console.log(`File '${fileHandle.name}' uploaded successfully to '${projectName}/${folderName}'`);
   } catch (error) {
-    console.error("Error accessing folders in root appFolderHandle:", error);
+    console.error("Error uploading document:", error);
   }
 }
 
-// Function to recursively read the contents of a directory
-async function readEntireDirectory(directoryHandle, currentPath) {
-  try {
-    // List all entries in the current directory
-    for await (const entry of directoryHandle.values()) {
-      const entryPath = `${currentPath}/${entry.name}`;
 
-      if (entry.kind === 'directory') {
-        console.log(`Directory: ${entryPath}`);
-        // Recursively read subdirectories
-        await readEntireDirectory(entry, entryPath);
-      } else if (entry.kind === 'file') {
-        console.log(`File: ${entryPath}`);
-      }
+// Function to create a new project with a "Source Data" subdirectory
+async function createNewProject() {
+  try {
+    // Prompt the user to enter a name for the new project
+    const projectName = prompt("Enter the name of the new project:");
+    if (!projectName) {
+      console.log("Project creation canceled.");
+      return;
     }
+
+    // Create the new project directory in the root directory (appFolderHandle)
+    const projectHandle = await appFolderHandle.getDirectoryHandle(projectName, { create: true });
+
+    // Create the "Source Data" subdirectory within the new project directory
+    await projectHandle.getDirectoryHandle("Source Data", { create: true });
+
+    console.log(`Project '${projectName}' with 'Source Data' folder created successfully.`);
+
+    // Refresh the directory list UI
+    await showDirectory();
   } catch (error) {
-    console.error(`Error reading directory at ${currentPath}:`, error);
+    console.error("Error creating new project:", error);
   }
 }
 
-
-
+  
 
       // Event listeners for UI buttons
       document.addEventListener('DOMContentLoaded', () => {
         const initializeButton = document.getElementById('initializeButton');
-        const createDemoButton = document.getElementById('createDemo');
+        const reAuthDirButton = document.getElementById('reAuthDir');
+
 
         initializeButton.addEventListener('click', async () => {
           const db = await openDatabase();
@@ -289,6 +344,8 @@ async function readEntireDirectory(directoryHandle, currentPath) {
                                 const initializeMessageSection = document.getElementById('initializeMessage');
     initializeMessageSection.classList.add('hidden'); // Remove hidden class if the folder is not initialized
         });
+                // New event listener for re-authorization button
+        reAuthDirButton.addEventListener('click', reAuthorizeDirectory);
 
 
         // Initialize app when page loads
