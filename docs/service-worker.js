@@ -15,15 +15,16 @@ const filesToCache = [
 
 // Install event - caches app shell files
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            console.log('Caching app shell');
-            return cache.addAll(filesToCache).catch(error => {
-                console.error('Failed to cache:', error);
-            });
-        })
-    );
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('Caching app shell');
+      return cache.addAll(filesToCache);
+    }).catch(error => {
+      console.error('Failed to cache:', error);
+    })
+  );
 });
+
 
   
   // Activate event - clears old caches
@@ -44,16 +45,32 @@ self.addEventListener('install', event => {
   
   // Fetch event - serves cached content when offline
   self.addEventListener('fetch', event => {
-      event.respondWith(
-        caches.match(event.request).then(response => {
-          // If the request is for the root path, return `index.html`
-          if (event.request.mode === 'navigate' && !response) {
-            return caches.match('./index.html');
-          }
-          // Return the cached response if found, or fetch from network if not cached
-          return response || fetch(event.request).catch(() => caches.match('offline.html'));
-        })
-      );
-    });
-    
-    
+    event.respondWith(
+      caches.match(event.request).then(response => {
+        // If the request is for the root path and no cached response, return `index.html`
+        if (event.request.mode === 'navigate' && !response) {
+          return caches.match('./index.html');
+        }
+  
+        // Return the cached response if found, or fetch from the network if not cached
+        return response || fetch(event.request)
+          .then(networkResponse => {
+            // If successful, cache the network response for future use
+            if (networkResponse && networkResponse.ok) {
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, networkResponse.clone());
+              });
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            // If network fails, serve offline.html or a fallback page
+            return caches.match('offline.html');
+          });
+      }).catch(error => {
+        console.error('Fetching failed:', error);
+        return caches.match('offline.html'); // Ensure a fallback response is returned
+      })
+    );
+  });
+  
