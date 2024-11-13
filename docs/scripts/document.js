@@ -72,12 +72,19 @@ async function showDirectory() {
 }
 
 // Function to read and display file content
-  async function readFileContent(fileHandle) {
+async function readFileContent(fileHandle) {
     try {
       const file = await fileHandle.getFile();
       const text = await file.text();
 
-      // Create the <pre> element dynamically
+      // Get the existing <pre id="editable-code"> element if it exists
+      const existingPre = document.getElementById('editable-code');
+      if (existingPre) {
+        // Remove the existing <pre> element if it exists
+        existingPre.remove();
+      }
+
+      // Create the new <pre> element dynamically
       const pre = document.createElement('pre');
       pre.id = 'editable-code';
       pre.contentEditable = 'true';
@@ -95,19 +102,13 @@ async function showDirectory() {
       // Set the content to the <pre> element
       pre.innerHTML = numberedContent;
 
-      // Insert the <pre> element into the DOM
+      // Insert the <pre> element into the DOM inside the 'content' div
       document.querySelector('#fileContent .content').appendChild(pre);
     } catch (error) {
       console.error("Error reading file:", error);
     }
   }
 
-  document.getElementById('fileInput').addEventListener('change', async function(event) {
-    const fileHandle = event.target.files[0];
-    if (fileHandle) {
-      await readFileContent(fileHandle);
-    }
-  });
 
 
 // Modify showEntireDirectory to add event listeners to file items
