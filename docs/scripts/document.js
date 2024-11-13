@@ -74,40 +74,49 @@ async function showDirectory() {
 // Function to read and display file content
 async function readFileContent(fileHandle) {
     try {
-      const file = await fileHandle.getFile();
-      const text = await file.text();
+        const file = await fileHandle.getFile();
+        const text = await file.text();
 
-      // Get the existing <pre id="editable-code"> element if it exists
-      const existingPre = document.getElementById('editable-code');
-      if (existingPre) {
-        // Remove the existing <pre> element if it exists
-        existingPre.remove();
-      }
+        // Ensure XML special characters are escaped to prevent HTML rendering issues
+        const escapedText = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
 
-      // Create the new <pre> element dynamically
-      const pre = document.createElement('pre');
-      pre.id = 'editable-code';
-      pre.contentEditable = 'true';
+        // Get the existing <pre id="editable-code"> element if it exists
+        const existingPre = document.getElementById('editable-code');
+        if (existingPre) {
+            // Remove the existing <pre> element if it exists
+            existingPre.remove();
+        }
 
-      // Split the content by lines and add line numbers
-      const lines = text.split('\n');
-      let numberedContent = '';
-      lines.forEach((line, index) => {
-        const trimmedLine = line.replace(/^\s+/, ''); // Remove leading spaces
-        const indentation = line.replace(trimmedLine, ''); // Capture indentation
+        // Create the new <pre> element dynamically
+        const pre = document.createElement('pre');
+        pre.id = 'editable-code';
+        pre.contentEditable = 'true';
 
-        numberedContent += `<p class="line-number-wrapper">${index + 1}</p><p class="line-content">${indentation}${trimmedLine}</p>\n`;
-      });
+        // Split the content by lines and add line numbers
+        const lines = escapedText.split('\n');
+        let numberedContent = '';
+        lines.forEach((line, index) => {
+            const trimmedLine = line.replace(/^\s+/, ''); // Remove leading spaces
+            const indentation = line.replace(trimmedLine, ''); // Capture indentation
 
-      // Set the content to the <pre> element
-      pre.innerHTML = numberedContent;
+            numberedContent += `<p class="line-number-wrapper">${index + 1}</p><p class="line-content">${indentation}${trimmedLine}</p>\n`;
+        });
 
-      // Insert the <pre> element into the DOM inside the 'content' div
-      document.querySelector('#fileContent .content').appendChild(pre);
+        // Set the content to the <pre> element
+        pre.innerHTML = numberedContent;
+
+        // Insert the <pre> element into the DOM inside the 'content' div
+        document.querySelector('#fileContent .content').appendChild(pre);
     } catch (error) {
-      console.error("Error reading file:", error);
+        console.error("Error reading file:", error);
     }
-  }
+}
+
 
 
 
