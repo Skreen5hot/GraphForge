@@ -267,13 +267,6 @@ async function uploadDocument(event) {
     console.error("Error uploading document:", error);
   }
 }
-// Generic function for handling context menu actions
-function addContextMenuListener(menuItemId, actionFn) {
-  document.getElementById(menuItemId).addEventListener("click", () => {
-    actionFn();
-    document.getElementById("context-menu").style.display = "none"; // Hide menu after action
-  });
-}
 
 // Utility function to retrieve the Source Data folder for the selected project
 async function getFileSystemFolder(projectName) {
@@ -388,6 +381,14 @@ document.getElementById("directoryList").addEventListener("contextmenu", (event)
     console.log("In project:", selectedProjectFolderHandle);
   }
 });
+
+// Generic function for handling context menu actions
+function addContextMenuListener(menuItemId, actionFn) {
+  document.getElementById(menuItemId).addEventListener("click", () => {
+    actionFn();
+    document.getElementById("context-menu").style.display = "none"; // Hide menu after action
+  });
+}
 
 // Hide the context menu on click outside
 document.addEventListener("click", (event) => {
