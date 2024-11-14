@@ -376,7 +376,7 @@ document.getElementById("directoryList").addEventListener("contextmenu", (event)
     const contextMenu = document.getElementById("context-menu");
     contextMenu.style.display = "block";
     contextMenu.style.left = `${event.pageX}px`;
-    contextMenu.style.top = `${event.pageY}px`;
+    contextMenu.style.top = `${event.pageY - 120}px`; //account for header height
     console.log("Right-clicked on file:", selectedFileHandle);
     console.log("In project:", selectedProjectFolderHandle);
   }
