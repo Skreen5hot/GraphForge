@@ -43,34 +43,31 @@ self.addEventListener('install', event => {
     );
   });
   
-  // Fetch event - serves cached content when offline
-  self.addEventListener('fetch', event => {
-    event.respondWith(
-      caches.match(event.request).then(response => {
-        // If the request is for the root path and no cached response, return `index.html`
-        if (event.request.mode === 'navigate' && !response) {
-          return caches.match('./index.html');
-        }
-  
-        // Return the cached response if found, or fetch from the network if not cached
-        return response || fetch(event.request)
-          .then(networkResponse => {
-            // If successful, cache the network response for future use
-            if (networkResponse && networkResponse.ok) {
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, networkResponse.clone());
-              });
-            }
-            return networkResponse;
-          })
-          .catch(() => {
-            // If network fails, serve offline.html or a fallback page
-            return caches.match('offline.html');
+// Fetch event - serves cached content when offline
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      if (event.request.mode === 'navigate' && !response) {
+        return caches.match('./index.html');
+      }
+
+      return response || fetch(event.request).then(networkResponse => {
+        // Clone the network response only if it is successful
+        if (networkResponse && networkResponse.ok) {
+          const clonedResponse = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, clonedResponse);
           });
-      }).catch(error => {
-        console.error('Fetching failed:', error);
-        return caches.match('offline.html'); // Ensure a fallback response is returned
-      })
-    );
-  });
+        }
+        return networkResponse; // Return the original response
+      }).catch(() => {
+        return caches.match('offline.html');
+      });
+    }).catch(error => {
+      console.error('Fetching failed:', error);
+      return caches.match('offline.html');
+    })
+  );
+});
+
   
