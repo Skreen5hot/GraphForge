@@ -258,7 +258,7 @@ async function fetchBfoOwl() {
   
   try {
     // Attempt to fetch the file from the external URL
-    const response = await fetch(externalUrl, { mode: 'no-cors' });
+    const response = await fetch(externalUrl);  // without 'mode: no-cors'
 
     // Handle the response accordingly (since `no-cors` limits what we can do with the response body)
     if (response.ok) {
