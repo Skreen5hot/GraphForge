@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GraphForge File Access</title>
+  <script src="https://unpkg.com/n3/browser/n3.min.js"></script>
+    <script src="https://rdf.js.org/comunica-browser/versions/latest/engines/query-sparql/comunica-browser.js"></script>
+
+    <style>
+      .context-menu { display: none; position: absolute; background: #f4f4f4; border: 1px solid #ccc; z-index: 1000; }
+      .context-menu ul { list-style-type: none; margin: 0; padding: 0; }
+      .context-menu li { padding: 8px 12px; cursor: pointer; }
+      .context-menu li:hover { background: #ddd; }
+      #editable-code {
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #1e1e1e;
+      color: #dcdcdc;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .line-number-wrapper {
+      display: inline-block;
+      text-align: right;
+      padding-right: 10px;
+      border-right: 1px solid gray;
+      margin: 0 5px 0 0;
+    }
+
+    .line-content {
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      color: #dcdcdc;
+      font-size: 14px;
+      line-height: 1.4;
+      padding-left: 20px;
+      margin: 0;
+    }
+     </style>
+    </head>
+<body>
+  <h1>GraphForge File Access</h1>
+  <button id="reAuthDir" class="hidden">Re-Authorize Directory</button>
+
+  <section id="initializeMessage" class="page-section hidden">
+    <h2>Initialize Website</h2>
+    <p>To get started, please create a folder on your computer where GraphForge will have read/write access. This folder will allow you to store and manage your data securely.</p>
+    <button id="initializeButton">Initialize GraphForge</button>
+    <h3>Important Information:</h3>
+    <ul>
+      <li><strong>User Control:</strong> You will be prompted to select the folder you'd like to grant access to. Your privacy is our priority; we will not see the contents of your folder.</li>
+      <li><strong>Secure Interaction:</strong> All interactions are conducted securely, ensuring your data remains private.</li>
+    </ul>
+    <p>Once you have created the folder and selected it, click the "Initialize Website" button to proceed!</p>
+  </section>
+  <section id="fileContent" class="file-content">
+ <div class="content">
+</div>
+  </section>
+  <div id="project-menu" class="project-menu">
+    <ul id="directoryList"></ul>
+    <button id="createNewProject" onclick="createNewProject()">+ New Project</button>
+  </div>
+  <h2>SPARQL Query</h2>
+    <textarea id="queryInput" placeholder="Enter your SPARQL query here...">
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                SELECT *
+                WHERE { 
+                    ?s ?p ?o .                }
+    </textarea>
+    <button onclick="executeQuery()">Execute Query</button>
+    <button onclick="downloadTriples()">Download Triples</button>
+    <div id="results"></div>
+    <script src="scripts/app.js"></script>
+
+  <script>
+// SECTION: Main
+const PREDEFINED_FOLDER_NAME = "GraphForge";
+const dbName = 'GraphForgeDB';
+let appFolderHandle;
+      let selectedFileHandle;
+      let selectedProjectFolderHandle;
+
+// Initialize the app
+async function initializeApp() {
+  const db = await openDatabase();
+  appFolderHandle = await getStoredFolderHandle(db);
+  const initializeMessageSection = document.getElementById('initializeMessage');
+
+  if (!appFolderHandle) {
+    console.log("App folder not initialized.");
+    initializeMessageSection.classList.remove('hidden');
+  } else {
+    await showDirectory();
+  }
+}
+
+// Re-authorize directory access
+async function reAuthorizeDirectory() {
+  try {
+    const permission = await appFolderHandle.requestPermission({ mode: 'readwrite' });
+    if (permission === 'granted') {
+      console.log("Directory access re-authorized.");
+      document.getElementById('reAuthDir').classList.add('hidden');
+      await showDirectory();
+    } else {
+      console.warn("Directory re-authorization was denied.");
+    }
+  } catch (error) {
+    console.error("Error re-authorizing directory:", error);
+  }
+}
+
+// Show the directory structure
+async function showDirectory() {
+  const directoryListElement = document.getElementById("directoryList");
+
+  if (!directoryListElement || !appFolderHandle) {
+    console.error("Error: directoryList element or appFolderHandle not found.");
+    return;
+  }
+
+  try {
+    const permission = await appFolderHandle.queryPermission({ mode: 'readwrite' });
+    if (permission !== 'granted') {
+      alert("Access to the directory is not authorized. Please re-authorize.");
+      document.getElementById('reAuthDir').classList.remove('hidden');
+      return;
+    }
+
+    directoryListElement.innerHTML = '';
+    for await (const [name, handle] of appFolderHandle.entries()) {
+      if (handle.kind === "directory") {
+        const topLevelDirItem = document.createElement("li");
+        topLevelDirItem.className = "project";
+        topLevelDirItem.setAttribute('data-name', name);
+        
+        topLevelDirItem.innerHTML = `<div class="projectHeader">${name}</div>`;
+
+        // Dynamically add the onclick event
+        topLevelDirItem.addEventListener("click", (event) => {
+          setActiveProject(event);
+        });
+
+        const nestedList = document.createElement("ul");
+        topLevelDirItem.appendChild(nestedList);
+        await showEntireDirectory(handle, name, nestedList);
+        directoryListElement.appendChild(topLevelDirItem);
+      }
+    }
+  } catch (error) {
+    console.error("Error accessing folders:", error);
+  }
+}
+
+// Modify showEntireDirectory to add event listeners to file items and hide quads.nq
+async function showEntireDirectory(directoryHandle, currentPath, parentElement) {
+  try {
+    for await (const entry of directoryHandle.values()) {
+      // Exclude 'quads.nq' file from being displayed
+      if (entry.kind === 'file' && entry.name === 'quads.nq') {
+        continue; // Skip this file
+      }
+
+      const itemElement = document.createElement('li');
+      if (entry.kind === 'directory') {
+        itemElement.className = "project-folder";
+        itemElement.setAttribute('data-name', entry.name);
+        itemElement.innerHTML = `🖿 ${entry.name} <span class="upload-doc" onclick="uploadDocument(event)">+ Doc</span>`;
+        parentElement.appendChild(itemElement);
+
+        const sublist = document.createElement('ul');
+        itemElement.appendChild(sublist);
+        await showEntireDirectory(entry, entry.name, sublist);
+      } else if (entry.kind === 'file') {
+        itemElement.className = "file";
+        itemElement.setAttribute('data-name', entry.name);
+        itemElement.textContent = entry.name;
+        
+        parentElement.appendChild(itemElement);
+      }
+    }
+  } catch (error) {
+    console.error(`Error reading directory at ${currentPath}:`, error);
+  }
+}
+
+
+// Function to create a new project with a "Source Data" subdirectory
+async function createNewProject() {
+  try {
+    const projectName = prompt("Enter the name of the new project:");
+    if (!projectName) {
+      console.log("Project creation canceled.");
+      return;
+    }
+
+    const projectHandle = await appFolderHandle.getDirectoryHandle(projectName, { create: true });
+    await projectHandle.getDirectoryHandle("Source Data", { create: true });
+    console.log(`Project '${projectName}' with 'Source Data' folder created successfully.`);
+    await showDirectory();
+  } catch (error) {
+    console.error("Error creating new project:", error);
+  }
+}
+
+// Open IndexedDB and return a promise with the DB instance
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName, 1);
+    request.onupgradeneeded = event => event.target.result.createObjectStore('handles');
+    request.onsuccess = event => resolve(event.target.result);
+    request.onerror = event => reject(event.target.error);
+  });
+}
+
+// Store a folder handle in IndexedDB
+function storeFolderHandle(db, handle) {
+  const transaction = db.transaction(['handles'], 'readwrite');
+  const store = transaction.objectStore('handles');
+  const request = store.put(handle, 'appFolderHandle');
+  return new Promise((resolve, reject) => {
+    request.onsuccess = resolve;
+    request.onerror = event => reject(event.target.error);
+  });
+}
+
+// Retrieve a folder handle from IndexedDB
+function getStoredFolderHandle(db) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['handles'], 'readonly');
+    const store = transaction.objectStore('handles');
+    const request = store.get('appFolderHandle');
+    request.onsuccess = event => resolve(event.target.result);
+    request.onerror = event => reject(event.target.error);
+  });
+}
+
+// Create the app folder
+async function createAppFolder() {
+  try {
+    const baseDirectoryHandle = await window.showDirectoryPicker();
+    const folderHandle = await baseDirectoryHandle.getDirectoryHandle(PREDEFINED_FOLDER_NAME, { create: true });
+    await createDemo(folderHandle);
+    return folderHandle;
+  } catch (error) {
+    throw new Error("Error accessing or creating folder: " + error);
+  }
+}
+
+// Example to fetch external owl file through service worker
+async function fetchBfoOwl() {
+  const externalUrl = 'https://purl.obolibrary.org/obo/bfo.owl';
+  const response = await fetch(`/fetch-remote?url=${encodeURIComponent(externalUrl)}`);
+  
+  if (response.ok) {
+    const text = await response.text();
+    console.log('Fetched BFO content:', text);
+    // Now you can save or process the fetched content
+  } else {
+    console.error('Failed to fetch external URL:', response.status);
+  }
+}
+
+
+// Create a demo project inside the app folder
+async function createDemo(appFolderHandle) {
+  if (!appFolderHandle) {
+    console.error("App folder handle not found. Initialize the app first.");
+    return;
+  }
+
+  try {
+    // Create the demo folder and source data folder
+    const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo", { create: true });
+    const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data", { create: true });
+
+    // Fetch the BFO ontology
+    const bfoOwlContent = await fetchBfoOwl();
+
+    // Create a new file for bfo.owl and write the content
+    const bfoOwlFile = await sourceDataFolder.getFileHandle("bfo.owl", { create: true });
+    const writable = await bfoOwlFile.createWritable();
+    await writable.write(bfoOwlContent);
+    await writable.close();
+
+    console.log("Demo project created successfully with bfo.owl file.");
+  } catch (error) {
+    console.error("Error creating demo project:", error);
+  }
+}
+
+// Upload a document to a project's folder
+async function uploadDocument(event) {
+  try {
+    const folderElement = event.target.closest('.project-folder');
+    const projectElement = event.target.closest('.project');
+    const projectName = projectElement.getAttribute('data-name');
+    const folderName = folderElement.getAttribute('data-name');
+
+    if (!projectName || !folderName) {
+      console.error("Project or folder name not found.");
+      return;
+    }
+
+    const projectHandle = await appFolderHandle.getDirectoryHandle(projectName, { create: false });
+    const targetFolderHandle = await projectHandle.getDirectoryHandle(folderName, { create: false });
+    const [fileHandle] = await window.showOpenFilePicker();
+
+    if (!fileHandle) {
+      console.log("No file selected.");
+      return;
+    }
+
+    // Upload the original document to the folder
+    const newFileHandle = await targetFolderHandle.getFileHandle(fileHandle.name, { create: true });
+    const writable = await newFileHandle.createWritable();
+    const file = await fileHandle.getFile();
+    await writable.write(file);
+    await writable.close();
+
+    alert("File uploaded successfully.");
+    console.log(`${fileHandle.name} uploaded to folder ${folderName}.`);
+
+    // Parse the new file to generate quads
+    const newQuads = await triplify(file);
+    if (!newQuads || newQuads.length === 0) {
+      console.log("No quads generated from the file.");
+      return;
+    }
+
+    // Handle appending to quads.nq
+    const quadFileName = "quads.nq";
+    let quadFileHandle;
+
+    try {
+      // Try to open the existing quads.nq file
+      quadFileHandle = await targetFolderHandle.getFileHandle(quadFileName, { create: false });
+    } catch (err) {
+      if (err.name === "NotFoundError") {
+        // If quads.nq does not exist, create it
+        quadFileHandle = await targetFolderHandle.getFileHandle(quadFileName, { create: true });
+      } else {
+        throw err;
+      }
+    }
+
+    // Read existing content
+    let existingContent = "";
+    if (quadFileHandle) {
+      const existingFile = await quadFileHandle.getFile();
+      existingContent = await existingFile.text();
+    }
+
+    // Append new quads to the existing content
+    const updatedContent = existingContent + newQuads.join("\n") + "\n";
+
+    // Write the updated content back to quads.nq
+    const quadWritable = await quadFileHandle.createWritable();
+    await quadWritable.write(updatedContent);
+    await quadWritable.close();
+
+    console.log(`Quads appended to ${quadFileName}`);
+    alert("Quads successfully appended to quads.nq.");
+  } catch (error) {
+    console.error("Error uploading document:", error);
+  }
+      await showDirectory();
+}
+
+
+
+// Utility function to retrieve the Source Data folder for the selected project
+async function getFileSystemFolder(projectName) {
+  if (!appFolderHandle || !projectName) return null;
+
+  try {
+    const projectFolderHandle = await appFolderHandle.getDirectoryHandle(projectName, { create: false });
+    return await projectFolderHandle.getDirectoryHandle("Source Data", { create: false });
+  } catch (error) {
+    console.error("Error retrieving Source Data folder:", error);
+    return null;
+  }
+}
+
+function setActiveProject(event) {
+    // Get the clicked project element
+    const clickedProject = event.currentTarget;
+
+    // Find the currently active project and remove the .active class
+    const currentlyActive = document.querySelector('.project.active');
+    if (currentlyActive) {
+        currentlyActive.classList.remove('active');
+    }
+
+    // Add the .active class to the clicked project
+    clickedProject.classList.add('active');
+
+    // Log the name of the active project for debugging (optional)
+    const projectName = clickedProject.getAttribute('data-name');
+    console.log(`Active project set to: ${projectName}`);
+}
+
+
+// SECTION: Hooks
+document.addEventListener('DOMContentLoaded', () => {
+  const initializeButton = document.getElementById('initializeButton');
+  const reAuthDirButton = document.getElementById('reAuthDir');
+
+  initializeButton.addEventListener('click', async () => {
+    const db = await openDatabase();
+    appFolderHandle = await createAppFolder();
+    await storeFolderHandle(db, appFolderHandle);
+    await showDirectory();
+    document.getElementById('initializeMessage').classList.add('hidden');
+  });
+
+  reAuthDirButton.addEventListener('click', reAuthorizeDirectory);
+});
+
+// Trigger app initialization on load
+window.onload = initializeApp;
+
+let store = new N3.Store();
+        let prefixes = {};  // Global object to store prefixes
+
+        const DEBUG = false;
+
+        function log(message) {
+            if (DEBUG) {
+                console.log(message);
+            }
+            document.getElementById('results').innerHTML += message + '<br>';
+        }
+
+function triplify(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const content = e.target.result;
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const quads = []; // Array to store quads
+
+      try {
+        if (fileExtension === 'ttl') {
+          const parser = new N3.Parser({ format: 'Turtle' });
+          const writer = new N3.Writer({ format: 'N-Quads' });
+
+          parser.parse(content, (error, quad, prefixes) => {
+            if (error) reject(error);
+            if (quad) writer.addQuad(quad);
+            else {
+              // Serialization complete
+              writer.end((err, result) => {
+                if (err) reject(err);
+                resolve(result.split('\n').filter((line) => line.trim() !== ''));
+              });
+            }
+          });
+        } else if (fileExtension === 'owl' || fileExtension === 'rdf') {
+          console.log('RDF/XML parsing not supported in this example.');
+          reject('RDF/XML parsing requires additional libraries.');
+        } else {
+          console.log('Unsupported file format');
+          reject('Unsupported file format');
+        }
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
+}
+
+
+        function parseWithN3(content, format) {
+            const parser = new N3.Parser({ format: format });
+            parser.parse(content, (error, quad, prefixDeclarations) => {
+                if (error) {
+                    log('Error parsing file: ' + error);
+                } else if (quad) {
+                    store.add(quad);
+                } else {
+                    log('File loaded successfully. Triples count: ' + store.size);
+                }
+            });
+        }
+
+        function parseWithRdfParser(content) {
+            const rdfParser = new DOMParser();
+            const xmlDoc = rdfParser.parseFromString(content, "text/xml");
+            const triples = [];
+
+            function extractTriples(subject, predicate, object) {
+                let objectValue;
+                if (typeof object === 'string') {
+                    objectValue = object;
+                } else if (object && typeof object === 'object') {
+                    objectValue = object.getAttribute && object.getAttribute('rdf:resource') || object.textContent && object.textContent.trim();
+                }
+                if (objectValue) {
+                    triples.push({ subject, predicate, object: objectValue });
+                }
+            }
+
+            function traverseXML(node, subject) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const nodeName = node.nodeName;
+                    const newSubject = node.getAttribute('rdf:about') || node.getAttribute('rdf:ID') || subject;
+
+                    if (nodeName === 'owl:Class') {
+                        for (let child of node.childNodes) {
+                            if (child.nodeType === Node.ELEMENT_NODE) {
+                                if (child.nodeName === 'owl:equivalentClass') {
+                                    handleEquivalentClass(child, newSubject);
+                                } else {
+                                    extractTriples(newSubject, child.nodeName, child);
+                                }
+                            }
+                        }
+                    } else if (nodeName !== 'rdf:RDF' && nodeName !== 'rdf:Description') {
+                        for (let child of node.childNodes) {
+                            if (child.nodeType === Node.ELEMENT_NODE) {
+                                const predicate = child.nodeName;
+                                if (child.hasAttribute('rdf:resource')) {
+                                    extractTriples(newSubject, predicate, child);
+                                } else if (child.childNodes.length > 0) {
+                                    traverseXML(child, newSubject);
+                                } else {
+                                    extractTriples(newSubject, predicate, child);
+                                }
+                            }
+                        }
+                    } else {
+                        for (let child of node.childNodes) {
+                            traverseXML(child, newSubject);
+                        }
+                    }
+                }
+            }
+
+            function handleEquivalentClass(node, subject) {
+                for (let child of node.childNodes) {
+                    if (child.nodeType === Node.ELEMENT_NODE) {
+                        if (child.nodeName === 'owl:Class') {
+                            const oneOf = child.getElementsByTagName('owl:oneOf')[0];
+                            if (oneOf) {
+                                const members = oneOf.getElementsByTagName('rdf:Description');
+                                for (let member of members) {
+                                    const memberURI = member.getAttribute('rdf:about');
+                                    if (memberURI) {
+                                        extractTriples(memberURI, 'rdf:type', subject);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            const rdfRoot = xmlDoc.documentElement;
+            if (rdfRoot) {
+                traverseXML(rdfRoot, '');
+            }
+
+            triples.forEach(triple => {
+                store.addQuad(
+                    N3.DataFactory.namedNode(triple.subject),
+                    N3.DataFactory.namedNode(triple.predicate),
+                    triple.object.startsWith('http') ? N3.DataFactory.namedNode(triple.object) : N3.DataFactory.literal(triple.object)
+                );
+            });
+
+            log('File loaded successfully. Triples count: ' + store.size);
+        }
+
+// 1. Function to prepare the query with prefixes and replacements
+function prepareQuery(query, prefixes) {
+  // Replace 'a' with 'rdf:type' where it's safe
+  query = query.replace(/\ba\s+(?=\w+:[\w-]+|<[^>]+>)/g, 'rdf:type ');
+
+  // Extract and process PREFIX statements
+  const prefixRegex = /^PREFIX\s+\w+:\s*<[^>]+>\s*/gm;
+  const prefixStatements = query.match(prefixRegex) || [];
+  query = query.replace(prefixRegex, ''); // Remove from main query
+
+  // Wrap unbracketed IRIs in angle brackets
+  query = query.replace(/(\bhttp:\/\/[^\s<>]+)(?=\s|$)/g, '<$1>');
+
+  // Dynamically add prefixes to the query
+  const prefixString = Object.entries(prefixes).map(
+      ([prefix, uri]) => `PREFIX ${prefix}: <${uri}>`
+  ).join('\n');
+  query = `${prefixString}\n${query}`;
+
+  // Reattach PREFIX statements if necessary
+  if (prefixStatements.length) {
+      query = prefixStatements.join('\n') + '\n' + query;
+  }
+
+  return query;
+}
+
+// 2. Function to load RDF data into N3.Store
+async function loadRdfData(fileHandle) {
+  const file = await fileHandle.getFile();
+  const content = await file.text();
+  
+  const store = new N3.Store();
+  const parser = new N3.Parser();
+  
+  parser.parse(content, (error, quad) => {
+      if (error) {
+          throw new Error('Error parsing RDF data: ' + error);
+      }
+      if (quad) {
+          store.addQuad(quad);
+      }
+  });
+
+  return store;
+}
+
+// 3. Function to execute the query with Comunica engine
+async function executeSparqlQuery(query, store) {
+  const queryEngine = new Comunica.QueryEngine();
+  const result = await queryEngine.query(query, { sources: [store] });
+  return result;
+}
+
+// 4. Function to process and display the query results
+async function displayQueryResults(result, elementId) {
+  console.log(result); // Log the entire result object for inspection
+
+  if (result.resultType === 'bindings') {
+      let tableHTML = '<table border="1"><thead><tr>';
+      let headers = [];
+      let count = 0;
+
+      try {
+          const bindingsStream = await result.execute();  // Await the stream
+
+          // Handle each binding in the stream
+          bindingsStream.on('data', (binding) => {
+              count++;
+              if (count === 1) {
+                  // First binding will define the headers
+                  for (const [key] of binding.entries) {
+                      headers.push(key);
+                      tableHTML += `<th>${key}</th>`;
+                  }
+                  tableHTML += '</tr></thead><tbody>';
+              }
+
+              // Process each binding
+              tableHTML += '<tr>';
+              for (const [key, value] of binding.entries) {
+                  tableHTML += `<td>${value.value}</td>`;
+              }
+              tableHTML += '</tr>';
+          });
+
+          // Handle the end of the stream
+          bindingsStream.on('end', () => {
+              tableHTML += '</tbody></table>';
+              document.getElementById(elementId).innerHTML = tableHTML;
+              console.log(`Processed ${count} bindings.`);
+          });
+
+          // Handle any errors in the stream
+          bindingsStream.on('error', (error) => {
+              console.error('Error processing bindings: ', error);
+          });
+      } catch (error) {
+          console.error('Error executing bindings stream: ', error);
+      }
+  } else {
+      console.error('Unsupported result type or no data returned.');
+  }
+}
+
+// 5. Utility function for logging
+function log(message) {
+  console.log(message);
+}
+
+// 6. Utility function to get the active project
+function getActiveProject() {
+  const activeProjectElement = document.querySelector('.project.active');
+  if (!activeProjectElement) {
+      throw new Error("No active project selected.");
+  }
+
+  const projectName = activeProjectElement.getAttribute('data-name');
+  if (!projectName) {
+      throw new Error("Active project name not found.");
+  }
+
+  return projectName;
+}
+
+// Main function using the pure functions
+async function executeQuery() {
+  try {
+      let query = document.getElementById('queryInput').value.trim();
+      const activeProjectName = getActiveProject(); // Get the active project
+      log(`Active project: ${activeProjectName}`);
+
+      // Load the RDF data from quads.nq
+      const projectHandle = await appFolderHandle.getDirectoryHandle(activeProjectName, { create: false });
+      const sourceDataHandle = await projectHandle.getDirectoryHandle('Source Data', { create: false });
+      const quadFileHandle = await sourceDataHandle.getFileHandle('quads.nq', { create: false });
+
+      const store = await loadRdfData(quadFileHandle); // Load data into store
+      log(`Loaded ${store.size} quads from quads.nq.`);
+
+      // Prepare and modify the query
+      const preparedQuery = prepareQuery(query, prefixes);
+
+      // Execute the query
+      log('Starting query execution...');
+      log('Query: ' + preparedQuery);
+      const result = await executeSparqlQuery(preparedQuery, store);
+
+      // Display the query results
+      log('Query executed. Result type: ' + result.resultType);
+      displayQueryResults(result, 'results');
+
+  } catch (error) {
+      log('Error executing query: ' + error);
+      document.getElementById('results').textContent = 'Error: ' + error.message;
+  }
+}
+
+            
+
+
+                function downloadTriples() {
+            const writer = new N3.Writer({ format: 'text/turtle' });
+            writer.addQuads(store.getQuads(null, null, null, null));
+            writer.end((error, result) => {
+                if (error) {
+                    log('Error generating Turtle file: ' + error);
+                    return;
+                }
+                
+                const blob = new Blob([result], { type: 'text/turtle' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Output.ttl';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+
+  </script>
+</body>
+</html>
