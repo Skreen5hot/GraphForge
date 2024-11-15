@@ -256,17 +256,44 @@ async function createAppFolder() {
 async function fetchBfoOwl() {
   const externalUrl = 'https://purl.obolibrary.org/obo/bfo.owl';
   
-  // Use the URL directly in the query without encoding
-  const response = await fetch(`/fetch-remote?url=${externalUrl}`);
-  
-  if (response.ok) {
-    const text = await response.text();
-    console.log('Fetched BFO content:', text);
-    // Now you can save or process the fetched content
-  } else {
-    console.error('Failed to fetch external URL:', response.status);
+  try {
+    // Attempt to fetch the file from the external URL
+    const response = await fetch(externalUrl, { mode: 'no-cors' });
+
+    // Handle the response accordingly (since `no-cors` limits what we can do with the response body)
+    if (response.ok) {
+      // Get the text content of the .owl file (may need a different approach in 'no-cors' mode)
+      const text = await response.text();
+      console.log('Fetched BFO content:', text);
+
+      // After fetching, proceed to save it to the File System
+      await saveToFileSystem(text);
+    } else {
+      console.error('Failed to fetch external URL:', response.status);
+    }
+  } catch (error) {
+    console.error('Error fetching external URL:', error);
   }
 }
+
+// Save the content to the user's local file system
+async function saveToFileSystem(content) {
+  try {
+    const appFolderHandle = await window.showDirectoryPicker();
+    const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo", { create: true });
+    const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data", { create: true });
+    const yourDataFile = await sourceDataFolder.getFileHandle("bfo.owl", { create: true });
+    
+    const writable = await yourDataFile.createWritable();
+    await writable.write(content);
+    await writable.close();
+
+    console.log("File saved successfully!");
+  } catch (error) {
+    console.error("Error saving file:", error);
+  }
+}
+
 
 
 

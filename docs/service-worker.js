@@ -43,32 +43,8 @@ self.addEventListener('install', event => {
     );
   });
   
-// Fetch event - serves cached content when offline and handles dynamic URL fetching
+// Fetch event - serves cached content when offline
 self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
-
-  // If the request is for fetching an external resource (e.g., using 'fetch-remote' as a pattern in URL)
-  if (requestUrl.pathname === '/fetch-remote') {
-    const externalUrl = requestUrl.searchParams.get('url'); // Get the URL from query params
-    
-    if (externalUrl) {
-      // Handle dynamic fetching for external resources like .owl files
-      event.respondWith(
-        fetch(externalUrl).then(networkResponse => {
-          if (networkResponse && networkResponse.ok) {
-            return networkResponse.text(); // Assuming the content is text (like an owl file)
-          } else {
-            return new Response('Error fetching the external file', { status: 500 });
-          }
-        }).catch(() => {
-          return new Response('Network error while fetching external file', { status: 500 });
-        })
-      );
-      return; // Exit the fetch handler for this specific case
-    }
-  }
-
-  // If the request is not for an external resource, continue with the default cache and network logic
   event.respondWith(
     caches.match(event.request).then(response => {
       if (event.request.mode === 'navigate' && !response) {
@@ -93,6 +69,3 @@ self.addEventListener('fetch', event => {
     })
   );
 });
-
-
-  
