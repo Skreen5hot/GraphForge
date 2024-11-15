@@ -255,7 +255,9 @@ async function createAppFolder() {
 // Example to fetch external owl file through service worker
 async function fetchBfoOwl() {
   const externalUrl = 'https://purl.obolibrary.org/obo/bfo.owl';
-  const response = await fetch(`/fetch-remote?url=${encodeURIComponent(externalUrl)}`);
+  
+  // Use the URL directly in the query without encoding
+  const response = await fetch(`/fetch-remote?url=${externalUrl}`);
   
   if (response.ok) {
     const text = await response.text();
@@ -265,6 +267,7 @@ async function fetchBfoOwl() {
     console.error('Failed to fetch external URL:', response.status);
   }
 }
+
 
 
 // Create a demo project inside the app folder

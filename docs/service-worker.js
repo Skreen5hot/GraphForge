@@ -45,7 +45,6 @@ self.addEventListener('install', event => {
   
 // Fetch event - serves cached content when offline and handles dynamic URL fetching
 self.addEventListener('fetch', event => {
-  // Check if the request is for a specific dynamic URL (like .owl files or external resources)
   const requestUrl = new URL(event.request.url);
 
   // If the request is for fetching an external resource (e.g., using 'fetch-remote' as a pattern in URL)
