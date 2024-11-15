@@ -252,21 +252,21 @@ async function createAppFolder() {
   }
 }
 
-// Example to fetch external owl file through service worker
+// Function to fetch the .owl file from the external URL
 async function fetchBfoOwl() {
-  const externalUrl = 'https://purl.obolibrary.org/obo/bfo.owl';
+  const externalUrl = 'https://raw.githubusercontent.com/BFO-ontology/BFO/v2019-08-26/bfo_classes_only.owl';
   
   try {
-    // Attempt to fetch the file from the external URL
-    const response = await fetch(externalUrl);  // without 'mode: no-cors'
+    // Attempt to fetch the file from the external URL (without 'no-cors')
+    const response = await fetch(externalUrl, { mode: 'cors' });
 
-    // Handle the response accordingly (since `no-cors` limits what we can do with the response body)
+    // Handle the response if it's OK
     if (response.ok) {
-      // Get the text content of the .owl file (may need a different approach in 'no-cors' mode)
+      // Get the text content of the .owl file
       const text = await response.text();
       console.log('Fetched BFO content:', text);
 
-      // After fetching, proceed to save it to the File System
+      // Proceed to save the content to the File System
       await saveToFileSystem(text);
     } else {
       console.error('Failed to fetch external URL:', response.status);
@@ -276,14 +276,22 @@ async function fetchBfoOwl() {
   }
 }
 
-// Save the content to the user's local file system
+// Save the fetched content to the user's local file system
 async function saveToFileSystem(content) {
   try {
+    // Ask the user to select a directory where the file will be saved
     const appFolderHandle = await window.showDirectoryPicker();
-    const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo", { create: true });
-    const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data", { create: true });
-    const yourDataFile = await sourceDataFolder.getFileHandle("bfo.owl", { create: true });
     
+    // Create the "Project Demo" folder if it doesn't exist
+    const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo", { create: true });
+    
+    // Create the "Source Data" folder inside "Project Demo"
+    const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data", { create: true });
+    
+    // Create or overwrite the "bfo.owl" file
+    const yourDataFile = await sourceDataFolder.getFileHandle("bfo.owl", { create: true });
+
+    // Create a writable stream and save the content (text)
     const writable = await yourDataFile.createWritable();
     await writable.write(content);
     await writable.close();
