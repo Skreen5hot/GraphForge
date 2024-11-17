@@ -296,9 +296,15 @@ async function createDemo(appFolderHandle) {
   try {
     const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo", { create: true });
     const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data", { create: true });
-    const yourDataFile = await sourceDataFolder.getFileHandle("yourData.txt", { create: true });
-    const writable = await yourDataFile.createWritable();
-    await writable.write("Sample data for your demo.");
+    const fileUrl = 'https://raw.githubusercontent.com/BFO-ontology/BFO/v2019-08-26/bfo_classes_only.owl';
+
+    // Fetch the BFO ontology content
+    const bfoOwlContent = await fetchFile(fileUrl);
+
+    // Create a new file for bfo.owl and write the content
+    const bfoOwlFile = await sourceDataFolder.getFileHandle("bfo.owl", { create: true });
+    const writable = await bfoOwlFile.createWritable();
+    await writable.write(bfoOwlContent);
     await writable.close();
 
     console.log("Demo project created successfully with read-write permissions.");
@@ -336,8 +342,30 @@ async function uploadDocument(event) {
     await writable.close();
     await showDirectory();
     alert("File uploaded successfully.");
+
+    
   } catch (error) {
     console.error("Error uploading document:", error);
+  }
+}
+
+// Fetch the file content from an external URL
+async function fetchFile(fileUrl) {
+  try {
+    // Attempt to fetch the file from the provided URL
+    const response = await fetch(fileUrl);
+
+    // Handle the response accordingly
+    if (response.ok) {
+      // Return the text content of the .owl file
+      return await response.text();
+    } else {
+      console.error('Failed to fetch the URL:', response.status);
+      throw new Error(`Failed to fetch URL: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error fetching the URL:', error);
+    throw error;
   }
 }
 

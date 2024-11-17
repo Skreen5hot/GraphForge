@@ -75,7 +75,7 @@
     <button onclick="executeQuery()">Execute Query</button>
     <button onclick="downloadTriples()">Download Triples</button>
     <div id="results"></div>
-    <script src="scripts/app.js"></script>
+
 
   <script>
 // SECTION: Main
@@ -376,13 +376,14 @@ async function uploadDocument(event) {
     // Handle appending to quads.nq
     const quadFileName = "quads.nq";
     let quadFileHandle;
-
+    alert(quadFileHandle);
     try {
       // Try to open the existing quads.nq file
       quadFileHandle = await targetFolderHandle.getFileHandle(quadFileName, { create: false });
     } catch (err) {
       if (err.name === "NotFoundError") {
         // If quads.nq does not exist, create it
+        
         quadFileHandle = await targetFolderHandle.getFileHandle(quadFileName, { create: true });
       } else {
         throw err;
@@ -488,27 +489,14 @@ function triplify(file) {
 
       try {
         if (fileExtension === 'ttl') {
-          const parser = new N3.Parser({ format: 'Turtle' });
-          const writer = new N3.Writer({ format: 'N-Quads' });
+                    parseWithN3(content, 'Turtle');
+                } else if (fileExtension === 'owl' || fileExtension === 'rdf') {
+                    parseWithRdfParser(content);
+                } else {
+                    log('Unsupported file format');
+                }
+        
 
-          parser.parse(content, (error, quad, prefixes) => {
-            if (error) reject(error);
-            if (quad) writer.addQuad(quad);
-            else {
-              // Serialization complete
-              writer.end((err, result) => {
-                if (err) reject(err);
-                resolve(result.split('\n').filter((line) => line.trim() !== ''));
-              });
-            }
-          });
-        } else if (fileExtension === 'owl' || fileExtension === 'rdf') {
-          console.log('RDF/XML parsing not supported in this example.');
-          reject('RDF/XML parsing requires additional libraries.');
-        } else {
-          console.log('Unsupported file format');
-          reject('Unsupported file format');
-        }
       } catch (error) {
         reject(error);
       }
