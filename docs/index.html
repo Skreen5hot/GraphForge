@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/main.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" defer></script>
+    <script src="https://unpkg.com/n3/browser/n3.min.js"></script>
+    <script src="https://rdf.js.org/comunica-browser/versions/latest/engines/query-sparql/comunica-browser.js"></script>
     <link rel="icon" type="image/png" href="images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg" />
     <link rel="shortcut icon" href="images/favicon.ico" />
@@ -77,9 +79,19 @@
 
                 <!-- Saved Queries section -->
                 <section id="saved-queries" class="page-section hidden">
-                    <button id="add-query-section" class="add-query-button">+ New Query</button>
-                    <section id="query-sections-container" class="query-sections-container"></section>
-                </section>
+                    <h2>SPARQL Query</h2>
+                    <textarea id="queryInput" placeholder="Enter your SPARQL query here...">
+                          PREFIX rdf: 
+                                          <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                                  SELECT *
+                                  WHERE { 
+                                      ?s ?p ?o .                } LIMIT 50
+                      
+                                          </textarea>
+                    <button onclick="executeQuery()">Execute Query</button>
+                    <h2>Results</h2>
+                    <div id="results"></div>
+                                  </section>
 
                 <!-- Settings section -->
                 <section id="settings" class="page-section hidden">
