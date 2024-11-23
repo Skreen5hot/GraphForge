@@ -6,7 +6,7 @@
     let selectedProjectFolderHandle;
 
     // Initialize the app
-    async function initializeApp() {
+    async function initializeDocuments() {
       const db = await openDatabase();
       appFolderHandle = await getStoredFolderHandle(db);
       const initializeMessageSection = document.getElementById('initializeMessage');
@@ -593,7 +593,7 @@
     });
 
     // Trigger app initialization on load
-    window.onload = initializeApp;
+    window.onload = initializeDocuments;
 
 
     let store = new N3.Store();
