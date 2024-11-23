@@ -42,7 +42,7 @@ function initializeApp() {
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js?v2.4').then(registration => {
+      navigator.serviceWorker.register('/service-worker.js?v2.5').then(registration => {
         console.log('Service Worker registered with scope:', registration.scope);
       }).catch(error => {
         console.log('Service Worker registration failed:', error);
@@ -76,6 +76,11 @@ function createQuerySection() {
   const queryInput = document.createElement('textarea');
   queryInput.classList.add('query-input');
   queryInput.placeholder = 'Enter your query...';
+  queryInput.value = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT *
+WHERE   { 
+        ?s ?p ?o .                
+        } LIMIT 50`;
 
   // Create run query button
   const runButton = document.createElement('button');
@@ -85,6 +90,7 @@ function createQuerySection() {
   // Create results box
   const resultsBox = document.createElement('div');
   resultsBox.classList.add('query-results');
+  resultsBox.id =  'results';
   resultsBox.textContent = 'Results will appear here.';
 
   // Attach event listener to run the query on button click
