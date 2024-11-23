@@ -46,7 +46,7 @@
                     <li id="renameOption">Rename</li>
                     <li id="deleteOption">Delete</li>
                     <li id="duplicateOption">Duplicate</li>
-                  </ul>
+                </ul>
             </div>
             <!-- Content area with SPA sections -->
             <div class="content">
@@ -73,25 +73,28 @@
                     </section>
                     <section id="fileContent" class="file-content">
                         <div class="content">
-                       </div>
-                         </section>
+                        </div>
+                    </section>
                 </section>
 
                 <!-- Saved Queries section -->
                 <section id="saved-queries" class="page-section hidden">
+                    <button id="add-query-section" class="add-query-button">+ New Query</button>
+                    <section id="query-sections-container" class="query-sections-container">
+
                     <h2>SPARQL Query</h2>
                     <textarea id="queryInput" placeholder="Enter your SPARQL query here...">
-                          PREFIX rdf: 
-                                          <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                                  SELECT *
-                                  WHERE { 
-                                      ?s ?p ?o .                } LIMIT 50
-                      
-                                          </textarea>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT *
+WHERE   { 
+        ?s ?p ?o .                
+        } LIMIT 50
+                                          </textarea><br>
                     <button onclick="executeQuery()">Execute Query</button>
                     <h2>Results</h2>
                     <div id="results"></div>
-                                  </section>
+                </section>
+                </section>
 
                 <!-- Settings section -->
                 <section id="settings" class="page-section hidden">
