@@ -1,4 +1,4 @@
-const CACHE_NAME = "query-browser-cache-v1";
+const CACHE_NAME = "query-browser-cache-v2";
 const filesToCache = [
     "./",
     "index.html",
