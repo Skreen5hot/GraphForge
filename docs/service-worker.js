@@ -1,4 +1,4 @@
-const CACHE_NAME = "query-browser-cache-v2.5"; //Update cache version to refresh Also update version in initializeApp()
+const CACHE_NAME = "query-browser-cache-v2.51"; //Update cache version to refresh Also update version in initializeApp()
 const filesToCache = [
     "./",
     "index.html",
