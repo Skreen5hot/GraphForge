@@ -367,16 +367,27 @@
       try {
         const demoFolder = await appFolderHandle.getDirectoryHandle("Project Demo", { create: true });
         const sourceDataFolder = await demoFolder.getDirectoryHandle("Source Data", { create: true });
-        const fileUrl = 'https://raw.githubusercontent.com/BFO-ontology/BFO/v2019-08-26/bfo_classes_only.owl';
+        const fileUrl1 = 'https://raw.githubusercontent.com/BFO-ontology/BFO/v2019-08-26/bfo_classes_only.owl';
+        const fileUrl2 = 'https://raw.githubusercontent.com/owlcs/pizza-ontology/refs/heads/master/pizza.owl';
 
         // Fetch the BFO ontology content
-        const bfoOwlContent = await fetchFile(fileUrl);
+        const bfoOwlContent = await fetchFile(fileUrl1);
+
+        // Fetch the Pizza ontology content
+        const pizzaContent = await fetchFile(fileUrl2);
 
         // Create a new file for bfo.owl and write the content
         const bfoOwlFile = await sourceDataFolder.getFileHandle("bfo.owl", { create: true });
         const writable = await bfoOwlFile.createWritable();
         await writable.write(bfoOwlContent);
         await writable.close();
+
+// Create a new file for pizza.owl and write the content
+const pizzaFile = await sourceDataFolder.getFileHandle("pizza.owl", { create: true });
+const writable2 = await pizzaFile.createWritable();
+await writable2.write(pizzaContent);
+await writable2.close();
+
         //const yourDataFile = await sourceDataFolder.getFileHandle("quads.nq", { create: true });
 
         console.log("Demo project created successfully with read-write permissions.");

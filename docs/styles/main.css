@@ -166,23 +166,7 @@ button.toggle-sidebar:hover {
     /* Minimum height for the graph area */
 }
 
-.query-box {
-    margin-top: 20px;
-    /* Space above the query box */
-}
 
-#query-input {
-    width: 100%;
-    /* Full width input */
-    height: 60px;
-    /* Height for better usability */
-    padding: 10px;
-    /* Padding inside the textarea */
-    border: 1px solid #ccc;
-    /* Border for the input */
-    border-radius: 4px;
-    /* Slightly rounded corners */
-}
 
 button {
     background-color: #005cbf;
@@ -246,6 +230,11 @@ button.toggle-right-panel:hover {
     /* Smooth transition for content */
 }
 
+.query-box {
+    margin-top: 20px;
+    /* Space above the query box */
+}
+
 #query-results {
     background-color: #fff;
     /* White background for results */
@@ -283,8 +272,8 @@ button.toggle-right-panel:hover {
 }
 
 .query-input {
-    width: 95%;
-    height: 60px;
+    width: 97%;
+    height: 100px;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
