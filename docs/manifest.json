@@ -37,7 +37,7 @@
     "src": "images/screenshot-portrait.png",
     "sizes": "400x626",
     "type": "image/png",
-    "form_factor": "portrait"
+    "form_factor": "narrow"
   }
 ]
 
