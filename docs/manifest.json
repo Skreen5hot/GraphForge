@@ -2,7 +2,7 @@
     "name": "GraphForge",
     "short_name": "GraphForge",
     "description": "A Neo4j-like browser for running and visualizing queries.",
-    "start_url": "/index.html",
+    "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#4a90e2",
