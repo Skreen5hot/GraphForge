@@ -22,6 +22,25 @@ document.addEventListener('DOMContentLoaded', function () {
   initializeApp();
 });
 
+function toggleToState(selector, activeClass = 'active') {
+  const elements = document.querySelectorAll(selector);
+  const clickedElement = event.target.closest(selector);
+
+  if (clickedElement) {
+      const isCurrentlyActive = clickedElement.classList.contains(activeClass);
+      elements.forEach(el => el.classList.remove(activeClass));
+      if (!isCurrentlyActive) {
+          clickedElement.classList.add(activeClass);
+      }
+  }
+}
+
+document.addEventListener('click', function(event) {
+  if (event.target.closest('.projectHeader')) {
+      toggleToState('.projectHeader');
+  }
+});
+
 function menuFunction() {
   var x = document.getElementById("myTopnav");
   if (x.className === "topnav") {
@@ -38,6 +57,7 @@ function setActive(element) {
   // Add the "active" class to the clicked link
   element.classList.add("active");
 }
+
 function initializeApp() {
 
   if ('serviceWorker' in navigator) {
@@ -49,8 +69,6 @@ function initializeApp() {
       });
     });
   }
-
-
 
   const querySectionsContainer = document.getElementById('query-sections-container');
   const addQueryButton = document.getElementById('add-query-section');
@@ -147,7 +165,7 @@ if (window.location.protocol !== 'file:') {
   // Create a link element for the manifest
   const link = document.createElement('link');
   link.rel = 'manifest';
-  link.href = 'manifest.json';  // Adjust path as needed
+  link.href = './manifest.json';  // Adjust path as needed
 
   // Append it to the head
   document.head.appendChild(link);

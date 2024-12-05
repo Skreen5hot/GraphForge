@@ -111,8 +111,8 @@ button.toggle-sidebar:hover {
 }
 
 .sidebar ul li {
-    margin: 10px 0;
-    /* Spacing between links */
+    margin: 0;
+    padding: 10px 0px;
 }
 
 .sidebar a {
@@ -312,6 +312,42 @@ button.toggle-right-panel:hover {
     margin-right: 5px;
 }
 
+
+/* Project headers */
+.projectHeader:hover {
+    background-color: #f0f0f0;
+    color: #444;
+    cursor: pointer;
+}
+
+.projectHeader:active,
+.projectHeader.active  {
+    background-color: #e0e0e0;
+    color: #444;
+}
+
+.projectHeader:focus {
+    outline: 2px solid #007bff;
+}
+
+
+/* Files */
+.file:hover {
+    background-color: #f8f8f8;
+    color: #444;
+    cursor: pointer;
+}
+
+.file:active,
+.file.active {
+    background-color: #e8e8e8;
+    color: #444;
+}
+
+.file:focus {
+    outline: 2px solid #ffc107;
+}
+
 /* Style for file list inside project folder */
 ul#fileNames {
     display: block;
@@ -350,6 +386,15 @@ ul#fileNames {
 
 .upload-doc:hover {
     background-color: #0056b3;
+    cursor: pointer;
+}
+.upload-doc:active {
+    background-color: #007bff;
+}
+
+.upload-doc:focus {
+    outline: 2px solid #dc3545;
+    outline-offset: 2px;
 }
 
 /* Styling for the "Create New Project" button */
