@@ -236,7 +236,6 @@ button.toggle-right-panel:hover {
 }
 
 #query-results {
-    background-color: #fff;
     /* White background for results */
     padding: 10px;
     border: 1px solid #ccc;
@@ -282,9 +281,6 @@ button.toggle-right-panel:hover {
 
 .query-results {
     margin-top: 10px;
-    padding: 10px;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
     min-height: 50px;
     border-radius: 4px;
 }
@@ -476,6 +472,28 @@ ul#fileNames {
     margin: 0;
 }
 
+table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  td, th {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  tr:nth-child(even){background-color: #f2f2f2;}
+  
+  tr:hover {background-color: #ddd;}
+  
+  th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #04AA6D;
+    color: white;
+  }
 
 @media (max-width: 768px) {
     .main {

@@ -93,6 +93,7 @@ function createQuerySection() {
   // Create query input
   const queryInput = document.createElement('textarea');
   queryInput.classList.add('query-input');
+  queryInput.id = 'queryInput';
   queryInput.placeholder = 'Enter your query...';
   queryInput.value = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT *
@@ -112,7 +113,7 @@ WHERE   {
   resultsBox.textContent = 'Results will appear here.';
 
   // Attach event listener to run the query on button click
-  runButton.addEventListener('click', () => runQuery(queryInput.value, resultsBox));
+  runButton.addEventListener('click', () => executeQuery());
 
   // Append elements to the query section
   querySection.appendChild(queryInput);
