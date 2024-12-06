@@ -305,26 +305,22 @@ WHERE {
     }
 
     function downloadQuads() {
-      const writer = new N3.Writer({
-        format: 'text/n3'  // Use 'text/n3' format instead of 'text/turtle'
-      });
-      writer.addQuads(store.getQuads(null, null, null, null));  // No changes to quads
-      writer.end((error, result) => {
-        if (error) {
-          log('Error generating N3 file: ' + error);
-          return;
-        }
-        const blob = new Blob([result], {
-          type: 'text/n3'  // Ensure the correct MIME type for N3
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Output.n3';  // Updated file name to reflect N3 format
-        a.click();
-        URL.revokeObjectURL(url);
-      });
+  const writer = new N3.Writer({ format: 'application/n-quads' });
+  writer.addQuads(store.getQuads());
+  writer.end((error, result) => {
+    if (error) {
+      log('Error generating N-Quads file: ' + error);
+      return;
     }
+    const blob = new Blob([result], { type: 'application/n-quads' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Output.nq';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
   </script>
 </body>
 

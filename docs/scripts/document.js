@@ -145,18 +145,18 @@
       if (needsTriplify) {
         console.log(`Updating quads.nq for project: ${name}`);
         const writableStream = await quadsFileHandle.createWritable();
-    
+      
         try {
           await writableStream.write(new Blob([])); // Clear file content
           console.log("File content cleared");
-    
+      
           let totalWritten = 0; // Track how much is written
-    
+      
           for await (const [fileName, fileHandle] of directoryHandle.entries()) {
             if (fileHandle.kind === 'file' && (fileName.endsWith('.owl') || fileName.endsWith('.ttl'))) {
               const file = await fileHandle.getFile();
               console.log(`Processing file: ${fileName}`);
-    
+      
               // Wait for triplify to resolve
               const output = await triplify(file);  // Assuming this returns RDF quads
               
@@ -164,29 +164,27 @@
                 console.warn(`No RDF quads generated for file: ${fileName}`);
                 continue; // Skip if no quads are generated
               }
-    
-              // Create an N3.Writer instance with the desired format
-              const writer = new N3.Writer({
-                format: 'text/n3'  // Use 'text/n3' format instead of 'text/turtle'
-              });
-    
+      
+              // Create an N3.Writer instance with N-Quads format
+              const writer = new N3.Writer({ format: 'application/n-quads' });
+      
               // Convert N3Store (output) to quads
               output.forEach(quad => {
                 writer.addQuad(quad);  // Add each quad
               });
-    
+      
               // Use a Promise to handle the async nature of writer.end()
               await new Promise((resolve, reject) => {
                 writer.end((error, result) => {
                   if (error) {
-                    reject(`Error generating N3 file: ${error}`);
+                    reject(`Error generating N-Quads file: ${error}`);
                     return;
                   }
-    
-                  // The result is the N3 formatted string
+      
+                  // The result is the N-Quads formatted string
                   const outputString = result;
-                  console.log(`Generated N3 content for file: ${fileName}`);
-    
+                  console.log(`Generated N-Quads content for file: ${fileName}`);
+      
                   // Write the output string to the writable stream
                   if (typeof outputString === 'string') {
                     writableStream.write(outputString);
@@ -200,23 +198,17 @@
               });
             }
           }
-    
-          if (totalWritten === 0) {
-            console.warn('No data written to quads.nq.');
-          } else {
-            console.log(`Total bytes written to quads.nq: ${totalWritten}`);
-          }
-        } catch (error) {
-          console.error(`Error writing to quads.nq in project: ${name}`, error);
-        } finally {
           await writableStream.close();
-          console.log('Writable stream closed');
+          console.log(`Total bytes written to quads.nq: ${totalWritten}`);
+        } catch (error) {
+          console.error("Error in triplefy process:", error);
+          await writableStream.abort();
         }
       } else {
         console.log(`No updates needed for project: ${name}`);
       }
     }
-            
+  
 
     async function processProjects(projects) {
       if (!Array.isArray(projects)) {
@@ -729,7 +721,8 @@ await writable2.close();
       const rdfParser = new DOMParser();
       const xmlDoc = rdfParser.parseFromString(content, "text/xml");
       const triples = [];
-
+    
+      // Function to extract triples from the XML content
       function extractTriples(subject, predicate, object) {
         let objectValue;
         if (typeof object === 'string') {
@@ -738,18 +731,22 @@ await writable2.close();
           objectValue = object.getAttribute && object.getAttribute('rdf:resource') || object.textContent && object.textContent.trim();
         }
         if (objectValue) {
-          triples.push({
-            subject,
-            predicate,
-            object: objectValue
-          });
+          // Ensure subject is never empty
+          const safeSubject = subject || '_:blank';
+          store.addQuad(
+            N3.DataFactory.namedNode(safeSubject),
+            N3.DataFactory.namedNode(predicate),
+            objectValue.startsWith('http') ? N3.DataFactory.namedNode(objectValue) : N3.DataFactory.literal(objectValue)
+          );
         }
       }
-
+    
+      // Function to traverse the XML structure and extract triples
       function traverseXML(node, subject) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const nodeName = node.nodeName;
           const newSubject = node.getAttribute('rdf:about') || node.getAttribute('rdf:ID') || subject;
+    
           if (nodeName === 'owl:Class') {
             for (let child of node.childNodes) {
               if (child.nodeType === Node.ELEMENT_NODE) {
@@ -780,7 +777,8 @@ await writable2.close();
           }
         }
       }
-
+    
+      // Function to handle equivalent class processing
       function handleEquivalentClass(node, subject) {
         for (let child of node.childNodes) {
           if (child.nodeType === Node.ELEMENT_NODE) {
@@ -799,19 +797,129 @@ await writable2.close();
           }
         }
       }
-
+    
       const rdfRoot = xmlDoc.documentElement;
       if (rdfRoot) {
         traverseXML(rdfRoot, '');
       }
-
+    
+      // Log all the triples before adding them to the store
+      console.log('All extracted triples:', triples);
+    
+      // Add each triple to the store (ensuring each object is added separately)
       triples.forEach(triple => {
-        store.addQuad(N3.DataFactory.namedNode(triple.subject), N3.DataFactory.namedNode(triple.predicate), triple.object.startsWith('http') ? N3.DataFactory.namedNode(triple.object) : N3.DataFactory.literal(triple.object));
+        console.log('Final Triple:', triple);  // Log the final triple being added to the store
+        // Ensure we treat objects as literals or resources
+        store.addQuad(N3.DataFactory.namedNode(triple.subject), N3.DataFactory.namedNode(triple.predicate), 
+                      triple.object.startsWith('http') ? N3.DataFactory.namedNode(triple.object) : N3.DataFactory.literal(triple.object));
       });
-
-      log('File loaded successfully. Triples count: ' + store.size);
-
+    
+      console.log('File loaded successfully. Triples count: ' + store.size);
+    
       // Return store size or a message if no quads
       return store.size > 0 ? store : "No triples generated";
     }
+                    
+// Function to clear the store and load new quads
+async function loadQuadsToStore() {
+  if (!selectedProjectFolderHandle) {
+    console.error("No project folder is selected.");
+    throw new Error("No project folder is selected.");
+  }
 
+  try {
+    console.log("Attempting to get quads.nq file handle from the selected project folder.");
+
+    const sourceDataHandle = await selectedProjectFolderHandle.getDirectoryHandle('Source Data', { create: false });
+    if (!sourceDataHandle) {
+      throw new Error("Source Data folder not found.");
+    }
+
+    const quadsFileHandle = await sourceDataHandle.getFileHandle('quads.nq', { create: false });
+    if (!quadsFileHandle) {
+      throw new Error("quads.nq file not found in the Source Data folder.");
+    }
+
+    const quadsFile = await quadsFileHandle.getFile();
+    const quadsText = await quadsFile.text();
+    console.log("Quads file text retrieved:", quadsText.slice(0, 100));
+
+    // Clear the store and load the quads
+    store = new N3.Store();
+    const parser = new N3.Parser({ format: 'application/n-quads' });
+    
+    return new Promise((resolve, reject) => {
+      parser.parse(quadsText, (error, quad, prefixes) => {
+        if (error) {
+          console.error("Error parsing quad:", error);
+          reject(error);
+        } else if (quad) {
+          store.add(quad);
+        } else {
+          console.log("Quads loaded into the store. Total quads:", store.size);
+          resolve();
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Error loading quads file:", error);
+    throw error;
+  }
+}
+
+// Set the app's main folder handle
+async function setAppFolderHandle(event) {
+  console.log("Attempting to set app folder handle.");
+
+  // Get the closest project element from the clicked target
+  const projectElement = event.target.closest(".project");
+
+  if (projectElement) {
+    const projectName = projectElement.getAttribute("data-name"); // Get the project name for reference
+    console.log("Project name selected:", projectName);
+
+    if (appFolderHandle) {
+      try {
+        console.log("Attempting to get directory handle for project:", projectName);
+        // Retrieve the selected project's folder handle from appFolderHandle
+        selectedProjectFolderHandle = await appFolderHandle.getDirectoryHandle(projectName);
+        console.log("Selected project folder handle:", selectedProjectFolderHandle);
+      } catch (error) {
+        console.error("Error accessing project folder handle:", error);
+      }
+    } else {
+      console.error("App folder handle is not set.");
+    }
+  } else {
+    console.error("No project element found in the event target.");
+  }
+}
+
+// Event listener for handling project selection
+document.getElementById('directoryList').addEventListener('click', async (event) => {
+  console.log("Directory list clicked:", event.target);
+
+  const projectHeader = event.target.closest('.projectHeader');
+  if (projectHeader) {
+    const projectElement = projectHeader.closest('.project');
+    const projectName = projectElement?.dataset.name;
+
+    if (projectName) {
+      try {
+        console.log("Handling project selection for:", projectName);
+
+        // Set the app folder handle for the selected project
+        await setAppFolderHandle(event);
+
+        // Load the quads file into the store
+        await loadQuadsToStore();
+      } catch (error) {
+        console.error("Error handling project selection:", error);
+      }
+    } else {
+      console.error("No project name found in the project element.");
+    }
+  } else {
+    console.error("No project header clicked.");
+  }
+});
