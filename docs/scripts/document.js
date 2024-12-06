@@ -107,13 +107,13 @@
         console.error('Invalid directory handle:', directoryHandle);
         return;
       }
-
+    
       const name = directoryHandle.name;
       console.log(`Processing project: ${name}`);
-
+    
       let quadsFileHandle;
       let needsTriplify = false;
-
+    
       // Check for `quads.nq` or create it if missing
       try {
         quadsFileHandle = await directoryHandle.getFileHandle('quads.nq', { create: false });
@@ -124,15 +124,15 @@
         quadsFileHandle = await directoryHandle.getFileHandle('quads.nq', { create: true });
         needsTriplify = true; // Force triplify since the file was missing
       }
-
+    
       // If not already flagged to triplify, check file modification dates
       if (!needsTriplify) {
         const quadsModified = await (await quadsFileHandle.getFile()).lastModified;
-
+    
         for await (const [fileName, fileHandle] of directoryHandle.entries()) {
           if (fileHandle.kind === 'file' && (fileName.endsWith('.owl') || fileName.endsWith('.ttl'))) {
             const sourceModified = await (await fileHandle.getFile()).lastModified;
-
+    
             // If any source file is newer, mark as needing triplify
             if (sourceModified > quadsModified) {
               needsTriplify = true;
@@ -141,39 +141,82 @@
           }
         }
       }
-
+    
       if (needsTriplify) {
         console.log(`Updating quads.nq for project: ${name}`);
         const writableStream = await quadsFileHandle.createWritable();
-
+    
         try {
           await writableStream.write(new Blob([])); // Clear file content
-
+          console.log("File content cleared");
+    
+          let totalWritten = 0; // Track how much is written
+    
           for await (const [fileName, fileHandle] of directoryHandle.entries()) {
             if (fileHandle.kind === 'file' && (fileName.endsWith('.owl') || fileName.endsWith('.ttl'))) {
               const file = await fileHandle.getFile();
-              const output = await triplify(file);
-
-              const outputString = typeof output === 'string' ? output : JSON.stringify(output);
-
-              if (typeof outputString === 'string') {
-                await writableStream.write(outputString);
-              } else {
-                console.error(`Output is not a valid string:`, outputString);
-                throw new TypeError("Output data is not writable as string.");
+              console.log(`Processing file: ${fileName}`);
+    
+              // Wait for triplify to resolve
+              const output = await triplify(file);  // Assuming this returns RDF quads
+              
+              if (!output || output.length === 0) {
+                console.warn(`No RDF quads generated for file: ${fileName}`);
+                continue; // Skip if no quads are generated
               }
+    
+              // Create an N3.Writer instance with the desired format
+              const writer = new N3.Writer({
+                format: 'text/n3'  // Use 'text/n3' format instead of 'text/turtle'
+              });
+    
+              // Convert N3Store (output) to quads
+              output.forEach(quad => {
+                writer.addQuad(quad);  // Add each quad
+              });
+    
+              // Use a Promise to handle the async nature of writer.end()
+              await new Promise((resolve, reject) => {
+                writer.end((error, result) => {
+                  if (error) {
+                    reject(`Error generating N3 file: ${error}`);
+                    return;
+                  }
+    
+                  // The result is the N3 formatted string
+                  const outputString = result;
+                  console.log(`Generated N3 content for file: ${fileName}`);
+    
+                  // Write the output string to the writable stream
+                  if (typeof outputString === 'string') {
+                    writableStream.write(outputString);
+                    totalWritten += outputString.length;
+                    console.log(`Written ${outputString.length} bytes to quads.nq`);
+                  } else {
+                    reject(`Output is not a valid string: ${outputString}`);
+                  }
+                  resolve();  // Resolve once the write operation is complete
+                });
+              });
             }
+          }
+    
+          if (totalWritten === 0) {
+            console.warn('No data written to quads.nq.');
+          } else {
+            console.log(`Total bytes written to quads.nq: ${totalWritten}`);
           }
         } catch (error) {
           console.error(`Error writing to quads.nq in project: ${name}`, error);
         } finally {
           await writableStream.close();
+          console.log('Writable stream closed');
         }
       } else {
         console.log(`No updates needed for project: ${name}`);
       }
     }
-
+            
 
     async function processProjects(projects) {
       if (!Array.isArray(projects)) {

@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   initializeApp();
 });
-
+// Toggle states of elements
 function toggleToState(selector, activeClass = 'active') {
   const elements = document.querySelectorAll(selector);
   const clickedElement = event.target.closest(selector);
