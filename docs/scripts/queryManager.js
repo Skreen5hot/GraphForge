@@ -1,28 +1,88 @@
-// Original POC Query Service - Handles query logic and rendering results
-function runQuery(query, resultsBox) {
-    resultsBox.textContent = 'Running query...';
+/**
+ * A pure function that extracts the predicate and count data from the query result.
+ * 
+ * @param {Array} bindings - The array of bindings from the query result.
+ * @returns {Object} - An object containing the x and y values for Plotly.
+ */
+function preparePlotData(bindings) {
+    const x = [];  // Array to hold the x-axis data (e.g., predicates)
+    const y = [];  // Array to hold the y-axis data (e.g., counts)
+    let xLabel = '';
+    let yLabel = '';
 
-    // Simulated response with Plotly chart example
-    setTimeout(() => {
-        resultsBox.textContent = ''; // Clear previous content
-        const chartContainer = document.createElement('div');
-        chartContainer.style.height = '300px';
-        chartContainer.style.width = '100%';
+    // Check if there are exactly two columns in the first binding
+    if (bindings.length > 0) {
+        const firstBinding = bindings[0].entries; // The entries of the first binding
 
-        resultsBox.appendChild(chartContainer);
+        const keys = Array.from(firstBinding.keys());
 
-        // Sample data for Plotly
-        const data = [{
-            x: [1, 2, 3, 4, 5],
-            y: [10, 15, 13, 17, 19],
-            type: 'scatter'
-        }];
+        // Ensure there are exactly two columns
+        if (keys.length !== 2) {
+            console.log('Error: Query results should contain exactly two columns.');
+            return null;  // Return null if the condition is not met
+        }
 
-        Plotly.newPlot(chartContainer, data);
-    }, 1000);
+        // Dynamically assign the labels based on the query result
+        xLabel = keys[0];  // Assuming the first key corresponds to the x-axis variable
+        yLabel = keys[1];  // Assuming the second key corresponds to the y-axis variable
+
+        // Check if the second column contains numeric values
+        bindings.forEach(binding => {
+            const entries = Array.from(binding.entries);
+            const yValue = parseFloat(entries[1][1].value); // Try to parse the second column as a number
+
+            // If the second column is not numeric, return null to skip rendering the plot
+            if (isNaN(yValue)) {
+                console.log('Error: The second column must contain numeric values.');
+                return null;  // Return null if the second column is not numeric
+            }
+
+            x.push(entries[0][1].value);  // Add the first column value (predicate) to x
+            y.push(yValue);  // Add the second column value (count) to y
+        });
+    }
+
+    // Return null if there are any issues (e.g., more than 2 columns or non-numeric values)
+    if (x.length === 0 || y.length === 0) {
+        return null;
+    }
+
+    // Return the data and labels for plotting
+    return {
+        x: x,
+        y: y,
+        xLabel: xLabel,
+        yLabel: yLabel,
+        title: `Top ${xLabel} by ${yLabel}`  // Set a dynamic title
+    };
 }
 
-// Query Service - Handles query logic and rendering results
+
+/**
+ * A pure function that renders a Plotly graph with the provided data.
+ * 
+ * @param {Object} plotData - The data for the plot, containing x (predicates) and y (counts).
+ */
+function renderPlotlyGraph(plotData) {
+    const data = [{
+        x: plotData.x,
+        y: plotData.y,
+        type: 'bar',
+        name: plotData.yLabel  // Dynamically using the yLabel for the legend name
+    }];
+    
+    const layout = {
+        title: plotData.title || 'Query Results',
+        xaxis: { title: plotData.xLabel || 'X Axis' },
+        yaxis: { title: plotData.yLabel || 'Y Axis' }
+    };
+    
+    // Create the plot using Plotly
+    Plotly.newPlot('graphDiv', data, layout);
+}
+
+
+// Main executeQuery function
 async function executeQuery() {
     const queryEngine = new Comunica.QueryEngine();
     let query = document.getElementById('queryInput').value.trim();
@@ -64,34 +124,44 @@ async function executeQuery() {
         
         if (result.resultType === 'bindings') {
             const bindingsStream = await result.execute();
-            let tableHTML = '<table border = "1"><thead><tr> ';
+            let bindings = [];
+            let tableHTML = '<table border = "1"><thead><tr>';
             let headers = [];
             let count = 0;
+            
             bindingsStream.on('data', (binding) => {
                 count++;
                 if (count === 1) {
                     for (const [key] of binding.entries) {
                         headers.push(key);
-                        tableHTML += `
-                  <th>${key}</th>`;
+                        tableHTML += `<th>${key}</th>`;
                     }
-                    tableHTML += ' </tr> </thead> <tbody > ';
+                    tableHTML += '</tr></thead><tbody>';
                 }
                 tableHTML += '<tr>';
                 for (const [key, value] of binding.entries) {
-                    tableHTML += `
-                  <td>${value.value}</td>`;
+                    tableHTML += `<td>${value.value}</td>`;
                 }
-                tableHTML += ' </tr>';
+                tableHTML += '</tr>';
+                bindings.push(binding);  // Collect bindings for plotting
             });
 
             bindingsStream.on('end', () => {
-                tableHTML += '</tbody> </table>';
+                tableHTML += '</tbody></table>';
                 log(`Processed ${count} bindings.`);
                 document.getElementById('results').innerHTML = tableHTML;
+                
+                // Prepare and render the plot if we have exactly two columns and the second column is numeric
+                const plotData = preparePlotData(bindings);
+                if (plotData) {
+                    renderPlotlyGraph(plotData);  // Only render if plotData is valid
+                } else {
+                    console.log('Plot not rendered due to invalid data.');
+                }
+            
                 log('Query execution completed.');
             });
-
+            
             bindingsStream.on('error', (error) => {
                 log('Error processing bindings: ' + error);
             });

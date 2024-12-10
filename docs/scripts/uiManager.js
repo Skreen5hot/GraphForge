@@ -204,6 +204,12 @@ function createQuerySection() {
     resultsBox.classList.add('query-results');
     resultsBox.id = 'results';
     resultsBox.textContent = 'Results will appear here.';
+    // Create Graph box
+    const graphBox = document.createElement('div');
+    graphBox.classList.add('graph-results');
+    graphBox.id = 'graphDiv';
+ 
+
 
     // Attach event listener to run the query on button click
     runButton.addEventListener('click', () => executeQuery());
@@ -212,6 +218,7 @@ function createQuerySection() {
     querySection.appendChild(queryInput);
     querySection.appendChild(runButton);
     querySection.appendChild(resultsBox);
+    querySection.appendChild(graphBox);
 
     return querySection;
 }
