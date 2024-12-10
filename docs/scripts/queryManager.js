@@ -26,31 +26,42 @@ function runQuery(query, resultsBox) {
 async function executeQuery() {
     const queryEngine = new Comunica.QueryEngine();
     let query = document.getElementById('queryInput').value.trim();
+    
     // Replace 'a' with 'rdf:type' in contexts where it's safe to do so
     query = query.replace(/\ba\s+(?=\w+:[\w-]+|<[^>]+>)/g, 'rdf:type ');
+
     // Check for prefixes and process them separately if needed
     const prefixRegex = /^PREFIX\s+\w+:\s*<[^>]+>\s*/gm;
     const prefixStatements = query.match(prefixRegex) || [];
     query = query.replace(prefixRegex, ''); // Remove from main query
+
+    // Automatically wrap CURIEs like rdfs:seeAlso in angle brackets
+    query = query.replace(/\b([a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+)\b/g, '<$1>');
+
     // Wrap unbracketed IRIs in angle brackets
     query = query.replace(/(\bhttp:\/\/[^\s<>]+)(?=\s|$)/g, '<$1>');
-    // Leave CURIEs as is, without adding angle brackets
+
+    // Leave CURIEs as is, without adding angle brackets again
     // Add prefixes dynamically at the beginning of the query
     const prefixString = Object.entries(prefixes).map(
         ([prefix, uri]) => `PREFIX ${prefix}: <${uri}>`).join('\n');
     query = `${prefixString}\n${query}`;
+
     // Optionally, reattach PREFIX statements at the beginning if necessary
     if (prefixStatements.length) {
         query = prefixStatements.join('\n') + '\n' + query;
     }
+
     log('Starting query execution...');
     log('Query: ' + query);
     log('Store size: ' + store.size);
+
     try {
         const result = await queryEngine.query(query, {
             sources: [store]
         });
         log('Query executed. Result type: ' + result.resultType);
+        
         if (result.resultType === 'bindings') {
             const bindingsStream = await result.execute();
             let tableHTML = '<table border = "1"><thead><tr> ';
@@ -73,12 +84,14 @@ async function executeQuery() {
                 }
                 tableHTML += ' </tr>';
             });
+
             bindingsStream.on('end', () => {
                 tableHTML += '</tbody> </table>';
                 log(`Processed ${count} bindings.`);
                 document.getElementById('results').innerHTML = tableHTML;
                 log('Query execution completed.');
             });
+
             bindingsStream.on('error', (error) => {
                 log('Error processing bindings: ' + error);
             });
@@ -90,3 +103,4 @@ async function executeQuery() {
         document.getElementById('results').textContent = 'Error: ' + error.message;
     }
 }
+

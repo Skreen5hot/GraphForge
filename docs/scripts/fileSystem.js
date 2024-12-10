@@ -66,6 +66,14 @@ async function showDirectory() {
                 directoryListElement.appendChild(topLevelDirItem);
             }
         }
+          // Automatically select the first project
+          const firstProject = directoryListElement.querySelector('.project');
+          if (firstProject) {
+              const firstProjectHeader = firstProject.querySelector('.projectHeader');
+              if (firstProjectHeader) {
+                  firstProjectHeader.click(); // Simulate a click on the first project's header
+              }
+          }
     } catch (error) {
         console.error("Error accessing folders:", error);
     }
