@@ -4,24 +4,24 @@
   "version": "1.0.0",
   "icons": [
       {
-          "src": "/icons/web-app-manifest-512x512.png",
+          "src": "icons/web-app-manifest-512x512.png",
           "type": "image/png",
           "sizes": "512x512"
       },
       {
-          "src": "/icons/web-app-manifest-192x192.png",
+          "src": "icons/web-app-manifest-192x192.png",
           "type": "image/png",
           "sizes": "192x192"
       },
       {
-          "src": "/icons/web-app-manifest-144x144.png",
+          "src": "icons/web-app-manifest-144x144.png",
           "sizes": "144x144",
           "type": "image/png",
           "purpose": "any"
       }
   ],
   "id": "b38d51b0-b6aa-4726-bcda-aaf72d81e47f",
-  "start_url": "/index.html",
+  "start_url": "index.html",
   "background_color": "#ffffff",
   "display": "standalone",
   "scope": "/",
@@ -29,13 +29,13 @@
   "description": "A PWA App allowing users to run a graph and query locally.",
   "screenshots": [
       {
-          "src": "/images/screenshot-wide.png",
+          "src": "images/screenshot-wide.png",
           "type": "image/png",
           "sizes": "1200x600",
           "form_factor": "narrow"
       },
       {
-          "src": "/images/screenshot-portrait.png",
+          "src": "images/screenshot-portrait.png",
           "type": "image/png",
           "sizes": "400x626",
           "form_factor": "wide"

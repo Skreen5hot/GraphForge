@@ -1,13 +1,13 @@
 const CACHE_NAME = "query-browser-cache-v2.52"; //Update cache version to refresh Also update version in initializeApp()
 const filesToCache = [
     "./",
-    "/index.html",
-    "/manifest.json?v=1.0.0",
-    "/styles/main.css",
-    "/scripts/app.js",
-    "/offline.html",
-    "/icons/web-app-manifest-192x192.png",
-    "/icons/web-app-manifest-512x512.png",
+    "index.html",
+    "manifest.json?v=1.0.0",
+    "styles/main.css",
+    "scripts/app.js",
+    "offline.html",
+    "icons/web-app-manifest-192x192.png",
+    "icons/web-app-manifest-512x512.png",
     "https://cdn.plot.ly/plotly-latest.min.js",
     "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
 ];
