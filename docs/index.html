@@ -10,10 +10,10 @@
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" defer></script>
     <script src="https://unpkg.com/n3/browser/n3.min.js"></script>
     <script src="https://rdf.js.org/comunica-browser/versions/latest/engines/query-sparql/comunica-browser.js"></script>
-    <link rel="icon" type="image/png" href="images/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="images/favicon.svg" />
-    <link rel="shortcut icon" href="images/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="/icons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <link rel="shortcut icon" href="/icons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
 </head>
 
 <body>
@@ -98,10 +98,24 @@
             </aside>
         </div>
     </div>
-    <script src="scripts/fileSystem.js"></script>
-    <script src="scripts/graphProcessor.js"></script>
-    <script src="scripts/queryManager.js"></script>
-    <script src="scripts/uiManager.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker
+                    .register('/service-worker.js?v=1.0.0')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+    <script src="/scripts/fileSystem.js?v=1.0.0"></script>
+    <script src="/scripts/graphProcessor.js?v=1.0.0"></script>
+    <script src="/scripts/queryManager.js?v=1.0.0"></script>
+    <script src="/scripts/uiManager.js?v=1.0.0"></script>
 </body>
 
 </html>
