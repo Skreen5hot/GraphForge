@@ -1,14 +1,13 @@
-const CACHE_NAME = "query-browser-cache-v2.51"; //Update cache version to refresh Also update version in initializeApp()
+const CACHE_NAME = "query-browser-cache-v2.52"; //Update cache version to refresh Also update version in initializeApp()
 const filesToCache = [
     "./",
-    "index.html",
-    "manifest.json",
-    "service-worker.js",
-    "styles/main.css",
-    "scripts/app.js",
-    "offline.html",
-    "images/web-app-manifest-192x192.png",
-    "images/web-app-manifest-512x512.png",
+    "/index.html",
+    "/manifest.json?v=1.0.0",
+    "/styles/main.css",
+    "/scripts/app.js",
+    "/offline.html",
+    "/icons/web-app-manifest-192x192.png",
+    "/icons/web-app-manifest-512x512.png",
     "https://cdn.plot.ly/plotly-latest.min.js",
     "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
 ];
@@ -25,47 +24,51 @@ self.addEventListener('install', event => {
   );
 });
 
+// Fetch event: Stale-While-Revalidate or Network-First strategies
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
 
-  
-  // Activate event - clears old caches
-  self.addEventListener('activate', event => {
-    event.waitUntil(
-      caches.keys().then(CACHE_NAMEs => {
-        return Promise.all(
-          CACHE_NAMEs.map(cache => {
-            if (cache !== CACHE_NAME) {
-              console.log('Clearing old cache');
-              return caches.delete(cache);
-            }
+  if (url.origin === location.origin) {
+      // Stale-While-Revalidate strategy for same-origin assets
+      event.respondWith(
+          caches.match(event.request).then((cachedResponse) => {
+              const fetchPromise = fetch(event.request).then((networkResponse) => {
+                  caches.open(CACHE_NAME).then((cache) => {
+                      cache.put(event.request, networkResponse.clone());
+                  });
+                  return networkResponse;
+              });
+              return cachedResponse || fetchPromise;
           })
-        );
-      })
-    );
-  });
-  
-// Fetch event - serves cached content when offline
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      if (event.request.mode === 'navigate' && !response) {
-        return caches.match('./index.html');
-      }
+      );
+  } else {
+      // Network-First strategy for third-party resources
+      event.respondWith(
+          fetch(event.request)
+              .then((networkResponse) => {
+                  return caches.open(CACHE_NAME).then((cache) => {
+                      cache.put(event.request, networkResponse.clone());
+                      return networkResponse;
+                  });
+              })
+              .catch(() => caches.match(event.request))
+      );
+  }
+});
 
-      return response || fetch(event.request).then(networkResponse => {
-        // Clone the network response only if it is successful
-        if (networkResponse && networkResponse.ok) {
-          const clonedResponse = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, clonedResponse);
-          });
-        }
-        return networkResponse; // Return the original response
-      }).catch(() => {
-        return caches.match('offline.html');
-      });
-    }).catch(error => {
-      console.error('Fetching failed:', error);
-      return caches.match('offline.html');
-    })
+// Activate the service worker and clean up old caches
+self.addEventListener("activate", (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+      caches.keys().then((cacheNames) => {
+          return Promise.all(
+              cacheNames.map((cacheName) => {
+                  if (!cacheWhitelist.includes(cacheName)) {
+                      console.log("Deleting old cache: ", cacheName);
+                      return caches.delete(cacheName);
+                  }
+              })
+          );
+      })
   );
 });

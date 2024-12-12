@@ -152,17 +152,6 @@ function setActive(element) {
 }
 
 function initializeApp() {
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js').then(registration => {
-                console.log('Service Worker registered with scope:', registration.scope);
-            }).catch(error => {
-                console.log('Service Worker registration failed:', error);
-            });
-        });
-    }
-
     const querySectionsContainer = document.getElementById('query-sections-container');
     const addQueryButton = document.getElementById('add-query-section');
 
@@ -208,7 +197,7 @@ function createQuerySection() {
     const graphBox = document.createElement('div');
     graphBox.classList.add('graph-results');
     graphBox.id = 'graphDiv';
- 
+
 
 
     // Attach event listener to run the query on button click
