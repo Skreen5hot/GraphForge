@@ -99,7 +99,7 @@ document.getElementById('directoryList').addEventListener('click', async (event)
                 await setAppFolderHandle(event);
 
                 // Load the quads file into the store
-                await loadQuadsToStore();
+               // await loadQuadsToStore();
             } catch (error) {
                 console.error("Error handling project selection:", error);
             }

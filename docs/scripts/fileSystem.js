@@ -456,51 +456,51 @@ async function duplicateFile() {
 }
 
 // Function to clear the store and load new quads
-async function loadQuadsToStore() {
-    if (!selectedProjectFolderHandle) {
-        console.error("No project folder is selected.");
-        throw new Error("No project folder is selected.");
-    }
+// async function loadQuadsToStore() {
+//     if (!selectedProjectFolderHandle) {
+//         console.error("No project folder is selected.");
+//         throw new Error("No project folder is selected.");
+//     }
 
-    try {
-        console.log("Attempting to get quads.nq file handle from the selected project folder.");
+//     try {
+//         console.log("Attempting to get quads.nq file handle from the selected project folder.");
 
-        const sourceDataHandle = await selectedProjectFolderHandle.getDirectoryHandle('Source Data', { create: false });
-        if (!sourceDataHandle) {
-            throw new Error("Source Data folder not found.");
-        }
+//         const sourceDataHandle = await selectedProjectFolderHandle.getDirectoryHandle('Source Data', { create: false });
+//         if (!sourceDataHandle) {
+//             throw new Error("Source Data folder not found.");
+//         }
 
-        const quadsFileHandle = await sourceDataHandle.getFileHandle('quads.nq', { create: false });
-        if (!quadsFileHandle) {
-            throw new Error("quads.nq file not found in the Source Data folder.");
-        }
+//         const quadsFileHandle = await sourceDataHandle.getFileHandle('quads.nq', { create: false });
+//         if (!quadsFileHandle) {
+//             throw new Error("quads.nq file not found in the Source Data folder.");
+//         }
 
-        const quadsFile = await quadsFileHandle.getFile();
-        const quadsText = await quadsFile.text();
-        console.log("Quads file text retrieved:", quadsText.slice(0, 100));
+//         const quadsFile = await quadsFileHandle.getFile();
+//         const quadsText = await quadsFile.text();
+//         console.log("Quads file text retrieved:", quadsText.slice(0, 100));
 
-        // Clear the store and load the quads
-        store = new N3.Store();
-        const parser = new N3.Parser({ format: 'application/n-quads' });
+//         // Clear the store and load the quads
+//         store = new N3.Store();
+//         const parser = new N3.Parser({ format: 'application/n-quads' });
 
-        return new Promise((resolve, reject) => {
-            parser.parse(quadsText, (error, quad, prefixes) => {
-                if (error) {
-                    console.error("Error parsing quad:", error);
-                    reject(error);
-                } else if (quad) {
-                    store.add(quad);
-                } else {
-                    console.log("Quads loaded into the store. Total quads:", store.size);
-                    resolve();
-                }
-            });
-        });
-    } catch (error) {
-        console.error("Error loading quads file:", error);
-        throw error;
-    }
-}
+//         return new Promise((resolve, reject) => {
+//             parser.parse(quadsText, (error, quad, prefixes) => {
+//                 if (error) {
+//                     console.error("Error parsing quad:", error);
+//                     reject(error);
+//                 } else if (quad) {
+//                     store.add(quad);
+//                 } else {
+//                     console.log("Quads loaded into the store. Total quads:", store.size);
+//                     resolve();
+//                 }
+//             });
+//         });
+//     } catch (error) {
+//         console.error("Error loading quads file:", error);
+//         throw error;
+//     }
+// }
 
 // Set the app's main folder handle
 async function setAppFolderHandle(event) {
