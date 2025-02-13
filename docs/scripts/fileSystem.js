@@ -1,9 +1,9 @@
 // SECTION: Main
-const PREDEFINED_FOLDER_NAME = "GraphForge";
-const dbName = 'GraphForgeDB';
-let appFolderHandle;
-let selectedFileHandle;
-let selectedProjectFolderHandle;
+//const PREDEFINED_FOLDER_NAME = "GraphForge";
+//const dbName = 'GraphForgeDB';
+//let appFolderHandle;
+//let selectedFileHandle;
+//let selectedProjectFolderHandle;
 
 // Initialize the app
 async function initializeDocuments() {
