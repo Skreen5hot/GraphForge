@@ -1,9 +1,9 @@
 // SECTION: Main
-//const PREDEFINED_FOLDER_NAME = "GraphForge";
-//const dbName = 'GraphForgeDB';
-//let appFolderHandle;
-//let selectedFileHandle;
-//let selectedProjectFolderHandle;
+const PREDEFINED_FOLDER_NAME = "GraphForge";
+const dbName = 'GraphForgeDB';
+let appFolderHandle;
+let selectedFileHandle;
+let selectedProjectFolderHandle;
 
 // Initialize the app
 async function initializeDocuments() {
@@ -502,3 +502,30 @@ async function loadQuadsToStore() {
     }
 }
 
+// Set the app's main folder handle
+async function setAppFolderHandle(event) {
+    console.log("Attempting to set app folder handle.");
+
+    // Get the closest project element from the clicked target
+    const projectElement = event.target.closest(".project");
+
+    if (projectElement) {
+        const projectName = projectElement.getAttribute("data-name"); // Get the project name for reference
+        console.log("Project name selected:", projectName);
+
+        if (appFolderHandle) {
+            try {
+                console.log("Attempting to get directory handle for project:", projectName);
+                // Retrieve the selected project's folder handle from appFolderHandle
+                selectedProjectFolderHandle = await appFolderHandle.getDirectoryHandle(projectName);
+                console.log("Selected project folder handle:", selectedProjectFolderHandle);
+            } catch (error) {
+                console.error("Error accessing project folder handle:", error);
+            }
+        } else {
+            console.error("App folder handle is not set.");
+        }
+    } else {
+        console.error("No project element found in the event target.");
+    }
+}
