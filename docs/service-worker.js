@@ -32,12 +32,22 @@ self.addEventListener("fetch", (event) => {
       // Stale-While-Revalidate strategy for same-origin assets
       event.respondWith(
           caches.match(event.request).then((cachedResponse) => {
-              const fetchPromise = fetch(event.request).then((networkResponse) => {
-                  caches.open(CACHE_NAME).then((cache) => {
-                      cache.put(event.request, networkResponse.clone());
+              const fetchPromise = fetch(event.request)
+                  .then((networkResponse) => {
+                      if (!networkResponse || networkResponse.status !== 200) {
+                          return networkResponse;
+                      }
+                      // Clone the response for caching
+                      const responseClone = networkResponse.clone();
+                      caches.open(CACHE_NAME).then((cache) => {
+                          cache.put(event.request, responseClone);
+                      });
+                      return networkResponse;
+                  })
+                  .catch((error) => {
+                      console.error("Network fetch failed:", error);
+                      return null;
                   });
-                  return networkResponse;
-              });
               return cachedResponse || fetchPromise;
           })
       );
@@ -46,8 +56,13 @@ self.addEventListener("fetch", (event) => {
       event.respondWith(
           fetch(event.request)
               .then((networkResponse) => {
+                  if (!networkResponse || networkResponse.status !== 200) {
+                      return networkResponse;
+                  }
+                  // Clone the response for caching
+                  const responseClone = networkResponse.clone();
                   return caches.open(CACHE_NAME).then((cache) => {
-                      cache.put(event.request, networkResponse.clone());
+                      cache.put(event.request, responseClone);
                       return networkResponse;
                   });
               })
