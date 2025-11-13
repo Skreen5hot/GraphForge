@@ -1,4 +1,4 @@
-const CACHE_NAME = "query-browser-cache-v2.54"; // Increment this version to force a service worker update and re-cache the app shell.
+const CACHE_NAME = "query-browser-cache-v2.55"; // Increment this version to force a service worker update and re-cache the app shell.
 const filesToCache = [
     "./",
     "index.html",
@@ -33,13 +33,12 @@ self.addEventListener("fetch", (event) => {
       event.respondWith(
           caches.match(event.request).then(cachedResponse => {
               const networkFetch = fetch(event.request)
-                  .then(networkResponse => {
-                      // Update cache with fresh network response
-                      caches.open(CACHE_NAME).then(cache => {
-                          cache.put(event.request, networkResponse.clone());
-                      });
-                      return networkResponse;
-                  })
+                  .then(networkResponse => { // networkResponse is a stream and can only be consumed once.
+                      // We need to clone it to use it twice.
+                      const responseToCache = networkResponse.clone();
+                      caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+                      return networkResponse; // Return original response to the browser
+                  }) 
                   .catch(() => {
                       // Network failed. If we have a cached response, it's already returned.
                       // If not, and it's a navigation request, serve offline.html.
