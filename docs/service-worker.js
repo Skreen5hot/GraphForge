@@ -59,13 +59,15 @@ self.addEventListener("fetch", (event) => {
       // Network-First strategy for third-party resources
       event.respondWith(
           fetch(event.request)
-              .then((networkResponse) => {
-                  return caches.open(CACHE_NAME).then((cache) => {
-                      cache.put(event.request, networkResponse.clone());
-                      return networkResponse;
-                  });
-              })
-              .catch(() => caches.match(event.request))
+            .then(networkResponse => {
+                // Clone the response right away.
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseToCache);
+                });
+                // Return the original response to the browser.
+                return networkResponse;
+            }).catch(() => caches.match(event.request))
       );
   }
 });
