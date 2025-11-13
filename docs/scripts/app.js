@@ -61,11 +61,13 @@ function setActive(element) {
 function initializeApp() {
 
   if ('serviceWorker' in navigator) {
+    // The 'load' event ensures that the page is fully loaded before we register the service worker.
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js').then(registration => {
+      // Using a version in the query string is a good way to force an update to the service worker script.
+      navigator.serviceWorker.register('./service-worker.js?v=1.0.1').then(registration => {
         console.log('Service Worker registered with scope:', registration.scope);
       }).catch(error => {
-        console.log('Service Worker registration failed:', error);
+        console.error('Service Worker registration failed:', error);
       });
     });
   }

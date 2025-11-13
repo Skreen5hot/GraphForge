@@ -98,20 +98,6 @@
             </aside>
         </div>
     </div>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker
-                    .register('service-worker.js?v=1.0.1')
-                    .then(registration => {
-                        console.log('Service Worker registered with scope:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('Service Worker registration failed:', error);
-                    });
-            });
-        }
-    </script>
     <script src="scripts/fileSystem.js?v=1.0.0"></script>
     <script src="scripts/graphProcessor.js?v=1.0.0"></script>
     <script src="scripts/queryManager.js?v=1.0.0"></script>
