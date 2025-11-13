@@ -31,14 +31,28 @@ self.addEventListener("fetch", (event) => {
   if (url.origin === location.origin) {
       // Stale-While-Revalidate strategy for same-origin assets
       event.respondWith(
-          caches.match(event.request).then((cachedResponse) => {
-              const fetchPromise = fetch(event.request).then((networkResponse) => {
-                  caches.open(CACHE_NAME).then((cache) => {
-                      cache.put(event.request, networkResponse.clone());
+          caches.match(event.request).then(cachedResponse => {
+              const networkFetch = fetch(event.request)
+                  .then(networkResponse => {
+                      // Update cache with fresh network response
+                      caches.open(CACHE_NAME).then(cache => {
+                          cache.put(event.request, networkResponse.clone());
+                      });
+                      return networkResponse;
+                  })
+                  .catch(() => {
+                      // Network failed. If we have a cached response, it's already returned.
+                      // If not, and it's a navigation request, serve offline.html.
+                      if (!cachedResponse && event.request.mode === 'navigate') {
+                          console.warn('Offline and no cache for navigation request:', event.request.url);
+                          return caches.match('offline.html');
+                      }
+                      console.warn('Network fetch failed for:', event.request.url);
+                      return null; // Let the browser handle the error if no fallback
                   });
-                  return networkResponse;
-              });
-              return cachedResponse || fetchPromise;
+
+              // Return cached response immediately if available, otherwise wait for network fetch
+              return cachedResponse || networkFetch;
           })
       );
   } else {
