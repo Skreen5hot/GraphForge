@@ -1,4 +1,4 @@
-const CACHE_NAME = "query-browser-cache-v2.53"; // Increment this version to force a service worker update and re-cache the app shell.
+const CACHE_NAME = "query-browser-cache-v2.54"; // Increment this version to force a service worker update and re-cache the app shell.
 const filesToCache = [
     "./",
     "index.html",
